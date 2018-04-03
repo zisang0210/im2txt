@@ -71,7 +71,7 @@ class BaseModel(object):
 
         # Generate the captions for the images
         idx = 0
-        for k in tqdm(list(range(1)), desc='batch'):
+        for k in tqdm(list(range(eval_data.num_batches)), desc='batch'):
             batch = eval_data.next_batch()
             caption_data = self.beam_search(sess, batch, vocabulary)
 
