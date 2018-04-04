@@ -2,6 +2,9 @@ import parser
 import sys
 import collections
 import json
+token_path = '/home/hillyess/ai/project-image-caption/Flickr8k/Flickr8k_text/Flickr8k.token.txt'
+vocabulary_size = 10000
+
 
 def opendata(path):
     f = open(path, mode='r', encoding="utf-8")
@@ -15,8 +18,8 @@ def opendata(path):
             words.append(w)
     return words
 
-vocabulary = opendata('/home/hillyess/ai/project-image-caption/Flickr8k/Flickr8k_text/Flickr8k.token.txt')
-vocabulary_size = 10000
+vocabulary = opendata(token_path)
+
 def build_dataset(words, n_words):
     """Process raw inputs into a dataset."""
     count = [['UNK', -1]]
