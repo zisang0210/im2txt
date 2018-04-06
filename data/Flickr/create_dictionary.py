@@ -1,9 +1,15 @@
-import parser
-import sys
 import collections
 import json
-token_path = '/home/hillyess/ai/project-image-caption/Flickr8k/Flickr8k_text/Flickr8k.token.txt'
-vocabulary_size = 10000
+import tensorflow as tf
+import os
+
+
+flags = tf.app.flags
+flags.DEFINE_string('token_path', '/home/hillyess/ai/project-image-caption/flickr30k_images/results_20130124.token', 'Root directory to raw dataset.')
+flags.DEFINE_integer('vocabulary_size', 5000, 'Vocabulary size of dictionary')
+
+token_path = flags.FLAGS.token_path
+vocabulary_size = flags.FLAGS.vocabulary_size
 
 
 def opendata(path):
@@ -53,9 +59,14 @@ print('Most common words (+UNK)', count[:5])
 print('Sample data', data[:10], [reverse_dictionary[i] for i in data[:10]])
 print('length of dictionary:', len(dictionary))
 
+if os.path.exists('dictionary.json'):
+    os.remove('dictionary.json')
 fp = open('dictionary.json', 'a')
 json.dump(dictionary, fp, ensure_ascii=False)
 fp.close()
+
+if os.path.exists('reverse_dictionary.json'):
+    os.remove('reverse_dictionary.json')
 fp = open('reverse_dictionary.json', 'a')
 json.dump(reverse_dictionary, fp, ensure_ascii=False)
 fp.close()

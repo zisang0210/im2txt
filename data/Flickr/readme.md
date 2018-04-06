@@ -11,19 +11,20 @@ Flickr8k.token.txt是数据集的标注文件
 
 token_path 是Flickr8k.token.txt的绝对路径
 
-vocabulary_size = 10000 是词库大小
+vocabulary_size  是词库大小
+
+python3 create_dictionary.py --token_path=token.txt路径　--vocabulary_size = 字典大小
 
 生成dictionary.json和reverse_dictionary.json两个字典
 
 #### 2.create_tfrecord.py 创建数据文件
-修改这路径三个参数
-data_dir
-output_dir
-label_map_path
-随机选取6000个样本生成：
-flickr_train.record
-2000个生成：
-flickr_val.record
+两个json字典文件放在和   create_tfrecord.py 同一个文件夹  
+调用：
+                
+python3 create_tfrecord.py --image_data_dir=图片所在文件夹　--output_dir=tfrecord输出路径　--label_map_path=token.txt路径
+
+随机选取6000个样本生成：flickr_train.record
+2000个生成：flickr_val.record
 
 
 <pre><code>
@@ -31,11 +32,14 @@ flickr_val.record
       'image/height': dataset_util.int64_feature(height),
       'image/width': dataset_util.int64_feature(witdh),
       'image/filename': dataset_util.bytes_feature(filename.encode('utf8')),
-      'image/score': dataset_util.bytes_feature(importance),
+      'image/score_0': dataset_util.int64_list_feature(sentences[0]),
+      'image/score_1': dataset_util.int64_list_feature(sentences[1]),
+      'image/score_2': dataset_util.int64_list_feature(sentences[2]),
+      'image/score_3': dataset_util.int64_list_feature(sentences[3]),
+      'image/score_4': dataset_util.int64_list_feature(sentences[4]),
       'image/key/sha256': dataset_util.bytes_feature(key.encode('utf8')),
       'image/encoded': dataset_util.bytes_feature(encoded_jpg),
-      'image/format': dataset_util.bytes_feature('jpeg'.encode('utf8')),
-      'image/object/class/sentence': dataset_util.int64_list_feature(sentence)
+      'image/format': dataset_util.bytes_feature('jpeg'.encode('utf8'))
   }
 </code></pre>
 
