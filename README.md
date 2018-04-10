@@ -11,42 +11,45 @@ This neural system for image captioning is roughly based on the paper "Show, Att
 * **tqdm** ([instructions](https://pypi.python.org/pypi/tqdm))
 
 ### Usage
-* **Preparation:** Download the COCO train2014 and val2014 data [here](http://cocodataset.org/#download). Put the COCO train2014 images in the folder `train/images`, and put the file `captions_train2014.json` in the folder `train`. Similarly, put the COCO val2014 images in the folder `val/images`, and put the file `captions_val2014.json` in the folder `val`. Furthermore, download the pretrained VGG16 net [here](https://app.box.com/s/idt5khauxsamcg3y69jz13w6sc6122ph) or ResNet50 net [here](https://app.box.com/s/17vthb1zl0zeh340m4gaw0luuf2vscne) if you want to use it to initialize the CNN part.
+* **Preparation:** Download the COCO train2014 and val2014 data [here](http://cocodataset.org/#download). Put the COCO train2014 images in the folder `data/coco/train/images`, and put the file `captions_train2014.json` in the folder `data/coco/train`. Similarly, put the COCO val2014 images in the folder `data/coco/val/images`, and put the file `captions_val2014.json` in the folder `data/coco/val`. Furthermore, download the pretrained VGG16 net [here](https://app.box.com/s/idt5khauxsamcg3y69jz13w6sc6122ph) or ResNet50 net [here](https://app.box.com/s/17vthb1zl0zeh340m4gaw0luuf2vscne) if you want to use it to initialize the CNN part.
 
 * **Training:**
-To train a model using the COCO train2014 data, first setup various parameters in the file `config.py` and then run a command like this:
+To train a model using the flickr30k data, first make sure you are under the folder `code`, then setup various parameters in the file `config.py` and then run a command like this:
 ```shell
 python main.py --phase=train \
     --load_cnn \
-    --cnn_model_file='./vgg16_no_fc.npy'\
+    --cnn_model_file='../data/vgg16_no_fc.npy'\
+    --dataset='flickr30'
     [--train_cnn]    
 ```
 Turn on `--train_cnn` if you want to jointly train the CNN and RNN parts. Otherwise, only the RNN part is trained. The checkpoints will be saved in the folder `models`. If you want to resume the training from a checkpoint, run a command like this:
 ```shell
 python main.py --phase=train \
     --load \
-    --model_file='./models/xxxxxx.npy'\
+    --model_file='../output/models/xxxxxx.npy'\
+    --dataset='flickr30'
     [--train_cnn]
 ```
 To monitor the progress of training, run the following command:
 ```shell
-tensorboard --logdir='./summary/'
+tensorboard --logdir='../output/summary/'
 ```
 
 * **Evaluation:**
-To evaluate a trained model using the COCO val2014 data, run a command like this:
+To evaluate a trained model using the flickr30 data, run a command like this:
 ```shell
 python main.py --phase=eval \
     --model_file='./models/xxxxxx.npy' \
+    --dataset='flickr30'
     --beam_size=3
 ```
-The result will be shown in stdout. Furthermore, the generated captions will be saved in the file `val/results.json`.
+The result will be shown in stdout. Furthermore, the generated captions will be saved in the file `output/val/flickr30_results.json`.
 
 * **Inference:**
 You can use the trained model to generate captions for any JPEG images! Put such images in the folder `test/images`, and run a command like this:
 ```shell
 python main.py --phase=test \
-    --model_file='./models/xxxxxx.npy' \
+    --model_file='../output/models/xxxxxx.npy' \
     --beam_size=3
 ```
 The generated captions will be saved in the folder `test/results`.
