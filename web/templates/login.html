@@ -7,6 +7,7 @@
     .layui-form-item .layui-input-inline{
       float: left;
       width: 320px;
+      height: 50px;
       margin-right: 10px;
     }
   </style>
@@ -14,7 +15,7 @@
 {% block content %}
 <!-- begin content -->
 <div style="background: #333;margin: 70px auto 110px auto;padding: 40px 20px 40px 30px;width: 500px">
-  <h1 style="text-align:center">Admin</h1>
+  <h1 style="text-align:center;margin-bottom: 20px">Admin</h1>
   {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
   <form class="layui-form" action="{{ url_for('login') }}" method=post>
     <div class="layui-form-item">

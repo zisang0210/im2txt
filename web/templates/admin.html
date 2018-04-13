@@ -9,6 +9,13 @@
 {% endblock %}
 {% block content %}
   <!-- begin content -->
+  <!-- login/logout -->
+  <div  class="layui-container" style="width: 950px">
+    <div class=metanav style="position:absolute;right:10px;top:-60px;font-size: 16px">
+      <a href="{{ url_for('logout') }}">log out</a>
+    </div>
+  </div>
+
   <!-- stars -->
   <div  class="layui-container" style="width: 950px">
     <div class="rating" style="position:absolute;right:0px;top:-40px;">
@@ -29,14 +36,6 @@
       </div>
       <div id="none_record" style="font-size: 24px;position:absolute;top: 40%;left: 27%;display: none;">Unbelievable. No records here so far</div>
     </div>
-
-  <!--   <ul>
-    {% for r in records %}
-      <li><h2>{{ r.id }}</h2>{{ r.caption }}
-    {% else %}
-      <li><em>Unbelievable.  No entries here so far</em>
-    {% endfor %}
-    </ul> -->
   </div>
 
   <!-- pagination -->
@@ -79,7 +78,7 @@
               ,thisData = data.concat().splice(obj.curr*obj.limit - obj.limit, obj.limit);
               layui.each(thisData, function(index, item){
                 arr.push('<div class="layui-col-xs12 layui-col-sm6 layui-col-md4" style="text-align: center;">\
-                <img width="220" height="220" layer-src="'+ item.raw_path + '" layer-pid="" src="' + 
+                <img width="220" height="220" layer-src="'+ item.att_path + '" layer-pid="" src="' + 
                 item.raw_path + '" alt="' + item.caption + '">\
                 <div class="caption" style="height:70px;margin-top:5px">\
                   <div class="image-info">'+ item.caption +'</div>\

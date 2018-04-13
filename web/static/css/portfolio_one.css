@@ -32,7 +32,7 @@ div.loader {
   position: absolute;
   top: 0;
   left: 0;
-  background: url(loader_white.gif) no-repeat center;
+  background: url(../images/loader_white.gif) no-repeat center;
   width: 450px;
   height: 450px; /* this should be set to be at least the height of the largest image in the slideshow */}
   

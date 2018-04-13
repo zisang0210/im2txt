@@ -158,11 +158,16 @@ def login():
       return redirect(url_for('admin'))
   return render_template('login.html', error=error)
 
+@app.route('/logout')
+def logout():
+  session.pop('logged_in', None)
+  return redirect(url_for('login'))
+
 # home page
 @app.route('/admin/')
 def admin():
   if not session.get('logged_in'):
-    redirect(url_for('login'))
+    return redirect(url_for('login'))
 
   # return first page by default
   db = get_db()
