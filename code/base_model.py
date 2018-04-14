@@ -18,7 +18,7 @@ class BaseModel(object):
         self.config = config
         self.is_train = True if config.phase == 'train' else False
         self.train_cnn = self.is_train and config.train_cnn
-        self.image_loader = ImageLoader('./utils/ilsvrc_2012_mean.npy')
+        self.image_loader = ImageLoader('/home/tf/tensorflow/im2txt-master/code/utils/ilsvrc_2012_mean.npy')
         self.image_shape = [224, 224, 3]
         self.nn = NN(config)
         self.global_step = tf.Variable(0,
@@ -43,7 +43,9 @@ class BaseModel(object):
             for _ in tqdm(list(range(train_data.num_batches)), desc='batch'):
                 batch = train_data.next_batch()
                 image_files, sentences, masks = batch
+                #print('===imagefile===', image_files)
                 images = self.image_loader.load_images(image_files)
+
                 feed_dict = {self.images: images,
                              self.sentences: sentences,
                              self.masks: masks}

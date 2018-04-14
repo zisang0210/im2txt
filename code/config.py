@@ -9,7 +9,7 @@ class Config(object):
         self.num_lstm_units = 512
         self.num_initalize_layers = 2    # 1 or 2
         self.dim_initalize_layer = 512
-        self.num_attend_layers = 2       # 1 or 2
+        self.num_attend_layers = 1       # 1 or 2
         self.dim_attend_layer = 512
         self.num_decode_layers = 2       # 1 or 2
         self.dim_decode_layer = 1024
@@ -49,11 +49,14 @@ class Config(object):
         self.vocabulary_file = './vocabulary.csv'
         self.vocabulary_size = 5000
 
+        #model config
+        self.pipeline_config_path='/home/tf/tensorflow/im2txt-master/code/faster_rcnn_resnet50_coco.config'
+
         # about the training
-        self.train_image_dir = './train/images/'
-        self.train_caption_file = './train/captions_train2014.json'
-        self.temp_annotation_file = './train/anns.csv'
-        self.temp_data_file = './train/data.npy'
+        self.train_image_dir = '/home/tf/tensorflow/im2txt-master/code/train/images/'
+        self.train_caption_file = '/home/tf/tensorflow/im2txt-master/code/train/captions_train2014.json'
+        self.temp_annotation_file = '/home/tf/tensorflow/im2txt-master/code/train/anns.csv'
+        self.temp_data_file = '/home/tf/tensorflow/im2txt-master/code/train/data.npy'
 
         # about the evaluation
         self.eval_image_dir = './val/images/'

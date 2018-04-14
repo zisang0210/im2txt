@@ -73,7 +73,7 @@ class DataSet(object):
 def prepare_train_data(config):
     """ Prepare the data for training the model. """
     coco = COCO(config.train_caption_file)
-    coco.filter_by_cap_len(config.max_caption_length)
+    #coco.filter_by_cap_len(config.max_caption_length)
 
     print("Building the vocabulary...")
     vocabulary = Vocabulary(config.vocabulary_size)
@@ -85,7 +85,7 @@ def prepare_train_data(config):
     print("Vocabulary built.")
     print("Number of words = %d" %(vocabulary.size))
 
-    coco.filter_by_words(set(vocabulary.words))
+    #coco.filter_by_words(set(vocabulary.words))
 
     print("Processing the captions...")
     if not os.path.exists(config.temp_annotation_file):

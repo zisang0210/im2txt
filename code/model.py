@@ -1,12 +1,15 @@
 import tensorflow as tf
 import numpy as np
+import functools
 
 from base_model import BaseModel
+from object_detection.builders import model_builder
+from object_detection.utils import config_util
 
 class CaptionGenerator(BaseModel):
     def build(self):
         """ Build the model. """
-        self.build_cnn()
+        self.build_rpn()
         self.build_rnn()
         if self.is_train:
             self.build_optimizer()
@@ -395,6 +398,8 @@ class CaptionGenerator(BaseModel):
     def attend(self, contexts, output):
         """ Attention Mechanism. """
         config = self.config
+        #print('contexts', contexts)
+        #print('output',   output)
         reshaped_contexts = tf.reshape(contexts, [-1, self.dim_ctx])
         reshaped_contexts = self.nn.dropout(reshaped_contexts)
         output = self.nn.dropout(output)
@@ -406,11 +411,13 @@ class CaptionGenerator(BaseModel):
                                     use_bias = False,
                                     name = 'fc_a')
             logits1 = tf.reshape(logits1, [-1, self.num_ctx])
+            #print('logits1', logits1)
             logits2 = self.nn.dense(output,
                                     units = self.num_ctx,
                                     activation = None,
                                     use_bias = False,
                                     name = 'fc_b')
+            #print('logits2', logits2)
             logits = logits1 + logits2
         else:
             # use 2 fc layers to attend
@@ -540,3 +547,34 @@ class CaptionGenerator(BaseModel):
         tf.summary.scalar('max', tf.reduce_max(var))
         tf.summary.scalar('min', tf.reduce_min(var))
         tf.summary.histogram('histogram', var)
+
+
+    def build_rpn(self):
+
+        config = self.config
+
+        images = tf.placeholder(
+            dtype = tf.float32,
+            shape = [config.batch_size] + self.image_shape)
+        if config.pipeline_config_path:
+            model_configs = config_util.get_configs_from_pipeline_file(
+                config.pipeline_config_path)
+
+        model_config = model_configs['model']
+
+        if self.is_train:
+            model_fn = functools.partial(
+                model_builder.build,
+                model_config=model_config,
+                is_training=True)
+        detection_model = model_fn()
+        image_preprocessed = detection_model.preprocess(images) 
+        features = detection_model.predict(image_preprocessed)
+        feature = features['rpn_box_predictor_features']
+        feature_reshaped = tf.reshape(feature,
+                            [config.batch_size, 1444, 512])
+        print(feature)
+        self.num_ctx = 1444
+        self.dim_ctx = 512
+        self.conv_feats = feature_reshaped
+        self.images = images
