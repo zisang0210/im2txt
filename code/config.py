@@ -5,7 +5,7 @@ class Config(object):
         """Sets the default model hyperparameters."""
         # File pattern of sharded TFRecord file containing SequenceExample protos.
         # Must be provided in training and evaluation modes.
-        self.input_file_pattern = "/home/zisang/Documents/code/data/mscoco/train-?????-of-00256"
+        self.input_file_pattern = "/home/zisang/Documents/im2txt/data/coco/train-?????-of-00256"
 
         # Image format ("jpeg" or "png").
         self.image_format = "jpeg"
@@ -15,22 +15,24 @@ class Config(object):
     
         # Approximate number of values per input shard. Used to ensure sufficient
         # mixing between shards in training.
-        self.values_per_input_shard = 2300
+        self.values_per_input_shard = 100
         # Minimum number of shards to keep in the input queue.
         self.input_queue_capacity_factor = 2
         # Number of threads for prefetching SequenceExample protos.
         self.num_input_reader_threads = 1
         # Number of threads for image preprocessing. Should be a multiple of 2.
-        self.num_preprocess_threads = 4
+        self.num_preprocess_threads = 2
 
         # Name of the SequenceExample context feature containing image data.
         self.image_feature_name = "image/data"
         # Name of the SequenceExample feature list containing integer captions.
         self.caption_feature_name = "image/caption_ids"
+        # Name of the SequenceExample feature list containing float caption masks.
+        self.mask_feature_name = "image/caption_mask"
 
         # about the model architecture
         self.cnn = 'vgg16'               # 'vgg16' or 'resnet50'
-        self.max_caption_length = 20
+        self.max_caption_length = 5
         self.dim_embedding = 512
         self.num_lstm_units = 512
         self.num_initalize_layers = 2    # 1 or 2
@@ -53,7 +55,7 @@ class Config(object):
         # about the optimization
         self.max_checkpoints_to_keep = 5
         self.log_every_n_steps = 1
-        self.number_of_steps= 100
+        self.number_of_steps= 10
         self.num_epochs = 100
         self.batch_size = 32
         self.optimizer = 'Adam'    # 'Adam', 'RMSProp', 'Momentum' or 'SGD'

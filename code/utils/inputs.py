@@ -23,7 +23,7 @@ from __future__ import print_function
 import tensorflow as tf
 
 
-def parse_sequence_example(serialized, image_feature, caption_feature):
+def parse_sequence_example(serialized, image_feature, caption_feature,mask_feature):
   """Parses a tensorflow.SequenceExample into an image and caption.
 
   Args:
@@ -44,11 +44,13 @@ def parse_sequence_example(serialized, image_feature, caption_feature):
       },
       sequence_features={
           caption_feature: tf.FixedLenSequenceFeature([], dtype=tf.int64),
+          mask_feature: tf.FixedLenSequenceFeature([], dtype=tf.float32),
       })
 
   encoded_image = context[image_feature]
   caption = sequence[caption_feature]
-  return encoded_image, caption
+  mask = sequence[mask_feature]
+  return encoded_image, caption, mask
 
 
 def prefetch_input_data(reader,
@@ -178,21 +180,22 @@ def batch_with_dynamic_pad(images_and_captions,
     target_seqs: An int32 Tensor of shape [batch_size, padded_length].
     mask: An float32 0/1 Tensor of shape [batch_size, padded_length].
   """
-  enqueue_list = []
-  for image, caption in images_and_captions:
-    caption_length = tf.shape(caption)[0]
-    # input_length = tf.expand_dims(tf.subtract(caption_length, 1), 0)
+  # enqueue_list = []
+  # for image, caption, mask in images_and_captions:
+  #   caption_length = tf.shape(caption)[0]
+  #   # input_length = tf.expand_dims(tf.subtract(caption_length, 1), 0)
 
-    # input_seq = tf.slice(caption, [0], input_length)
-    # target_seq = tf.slice(caption, [1], input_length)
-    indicator = tf.ones(tf.expand_dims(caption_length, 0), dtype=tf.float32)
-    enqueue_list.append([image, caption, indicator])
+  #   # input_seq = tf.slice(caption, [0], input_length)
+  #   # target_seq = tf.slice(caption, [1], input_length)
+  #   indicator = tf.ones(tf.expand_dims(caption_length, 0), dtype=tf.float32)
+  #   enqueue_list.append([image, caption, indicator])
 
   images, captions, mask = tf.train.batch_join(
-      enqueue_list,
+      images_and_captions,
       batch_size=batch_size,
       capacity=queue_capacity,
-      dynamic_pad=True,
+      shapes=[[224,224,3],[21],[21]],
+      dynamic_pad=False,
       name="batch_and_pad")
 
   if add_summaries:

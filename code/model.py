@@ -1,5 +1,4 @@
 import tensorflow as tf
-from tensorflow.python.ops import array_ops
 import numpy as np
 
 from base_model import BaseModel
@@ -42,12 +41,13 @@ class CaptionGenerator(BaseModel):
             images_and_captions = []
             for thread_id in range(self.config.num_preprocess_threads):
                 serialized_sequence_example = input_queue.dequeue()
-                encoded_image, caption = input_ops.parse_sequence_example(
+                encoded_image, caption, mask = input_ops.parse_sequence_example(
                         serialized_sequence_example,
                         image_feature=self.config.image_feature_name,
-                        caption_feature=self.config.caption_feature_name)
+                        caption_feature=self.config.caption_feature_name,
+                        mask_feature=self.config.mask_feature_name)
                 image = self.process_image(encoded_image, thread_id=thread_id)
-                images_and_captions.append([image, caption])
+                images_and_captions.append([image, caption,mask])
 
             # Batch inputs.
             queue_capacity = (2 * self.config.num_preprocess_threads *
@@ -317,7 +317,7 @@ class CaptionGenerator(BaseModel):
             alphas = []
             cross_entropies = []
             predictions_correct = []
-            num_steps = array_ops.shape(sentences)[1]
+            num_steps = self.config.max_caption_length
             last_output = initial_output
             last_memory = initial_memory
             last_word = sentences[:, 0]
@@ -325,21 +325,18 @@ class CaptionGenerator(BaseModel):
             num_steps = 1
         last_state = last_memory, last_output
 
-        idx=tf.constant(0,dtype=tf.int32,name='idx')
-
-        # # Generate the words one by one
-        # for idx in range(num_steps):
-        def _time_step(idx,last_output,last_memory,last_state,last_word):
+        # Generate the words one by one
+        for idx in range(num_steps):
             # Attention mechanism
             with tf.variable_scope("attend"):
                 alpha = self.attend(contexts, last_output)
                 context = tf.reduce_sum(contexts*tf.expand_dims(alpha, 2),
                                         axis = 1)
-           #      if self.is_train:
-           #          tiled_masks = tf.tile(tf.expand_dims(masks[:, idx], 1),
-           #                               [1, self.num_ctx])
-           #          masked_alpha = alpha * tiled_masks
-           #          alphas.append(tf.reshape(masked_alpha, [-1]))
+                if self.is_train:
+                    tiled_masks = tf.tile(tf.expand_dims(masks[:, idx], 1),
+                                         [1, self.num_ctx])
+                    masked_alpha = alpha * tiled_masks
+                    alphas.append(tf.reshape(masked_alpha, [-1]))
 
             # Embed the last word
             with tf.variable_scope("word_embedding"):
@@ -351,86 +348,81 @@ class CaptionGenerator(BaseModel):
                 output, state = lstm(current_input, last_state)
                 memory, _ = state
 
-           #  # Decode the expanded output of LSTM into a word
-           #  with tf.variable_scope("decode"):
-           #      expanded_output = tf.concat([output,
-           #                                   context,
-           #                                   word_embed],
-           #                                   axis = 1)
-           #      logits = self.decode(expanded_output)
-           #      probs = tf.nn.softmax(logits)
-           #      prediction = tf.argmax(logits, 1)
-           #      predictions.append(prediction)
+            # Decode the expanded output of LSTM into a word
+            with tf.variable_scope("decode"):
+                expanded_output = tf.concat([output,
+                                             context,
+                                             word_embed],
+                                             axis = 1)
+                logits = self.decode(expanded_output)
+                probs = tf.nn.softmax(logits)
+                prediction = tf.argmax(logits, 1)
+                predictions.append(prediction)
 
-           #  # Compute the loss for this step, if necessary
+            # Compute the loss for this step, if necessary
             if self.is_train:
-           #      cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
-           #          labels = sentences[:, idx],
-           #          logits = logits)
-           #      masked_cross_entropy = cross_entropy * masks[:, idx]
-           #      cross_entropies.append(masked_cross_entropy)
+                cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                    labels = sentences[:, idx],
+                    logits = logits)
+                masked_cross_entropy = cross_entropy * masks[:, idx]
+                cross_entropies.append(masked_cross_entropy)
 
-           #      ground_truth = tf.cast(sentences[:, idx], tf.int64)
-           #      prediction_correct = tf.where(
-           #          tf.equal(prediction, ground_truth),
-           #          tf.cast(masks[:, idx], tf.float32),
-           #          tf.cast(tf.zeros_like(prediction), tf.float32))
-           #      predictions_correct.append(prediction_correct)
+                ground_truth = tf.cast(sentences[:, idx], tf.int64)
+                prediction_correct = tf.where(
+                    tf.equal(prediction, ground_truth),
+                    tf.cast(masks[:, idx], tf.float32),
+                    tf.cast(tf.zeros_like(prediction), tf.float32))
+                predictions_correct.append(prediction_correct)
 
-           #      last_output = output
-           #      last_memory = memory
+                last_output = output
+                last_memory = memory
                 last_state = state
                 last_word = sentences[:, idx]
 
-           #  tf.get_variable_scope().reuse_variables()
-            return (idx+1,last_output,last_memory,last_state,last_word)
+            tf.get_variable_scope().reuse_variables()
 
-        _, last_output, last_memory, last_state, last_word = tf.while_loop(
-            cond=lambda idx,*_:idx<num_steps,
-            body=_time_step,
-            loop_vars=(idx,last_output,last_memory,last_state,last_word)
-            )
-        # # Compute the final loss, if necessary
-        # if self.is_train:
-        #     cross_entropies = tf.stack(cross_entropies, axis = 1)
-        #     cross_entropy_loss = tf.reduce_sum(cross_entropies) \
-        #                          / tf.reduce_sum(masks)
 
-        #     alphas = tf.stack(alphas, axis = 1)
-        #     alphas = tf.reshape(alphas, [config.batch_size, self.num_ctx, -1])
-        #     attentions = tf.reduce_sum(alphas, axis = 2)
-        #     diffs = tf.ones_like(attentions) - attentions
-        #     attention_loss = config.attention_loss_factor \
-        #                      * tf.nn.l2_loss(diffs) \
-        #                      / (config.batch_size * self.num_ctx)
+        # Compute the final loss, if necessary
+        if self.is_train:
+            cross_entropies = tf.stack(cross_entropies, axis = 1)
+            cross_entropy_loss = tf.reduce_sum(cross_entropies) \
+                                 / tf.reduce_sum(masks)
 
-        #     reg_loss = tf.losses.get_regularization_loss()
+            alphas = tf.stack(alphas, axis = 1)
+            alphas = tf.reshape(alphas, [config.batch_size, self.num_ctx, -1])
+            attentions = tf.reduce_sum(alphas, axis = 2)
+            diffs = tf.ones_like(attentions) - attentions
+            attention_loss = config.attention_loss_factor \
+                             * tf.nn.l2_loss(diffs) \
+                             / (config.batch_size * self.num_ctx)
 
-        #     total_loss = cross_entropy_loss + attention_loss + reg_loss
+            reg_loss = tf.losses.get_regularization_loss()
 
-        #     predictions_correct = tf.stack(predictions_correct, axis = 1)
-        #     accuracy = tf.reduce_sum(predictions_correct) \
-        #                / tf.reduce_sum(masks)
+            total_loss = cross_entropy_loss + attention_loss + reg_loss
 
-        # self.contexts = contexts
-        # if self.is_train:
-        #     self.sentences = sentences
-        #     self.masks = masks
-        #     self.total_loss = total_loss
-        #     self.cross_entropy_loss = cross_entropy_loss
-        #     self.attention_loss = attention_loss
-        #     self.reg_loss = reg_loss
-        #     self.accuracy = accuracy
-        #     self.attentions = attentions
-        # else:
-        #     self.initial_memory = initial_memory
-        #     self.initial_output = initial_output
-        #     self.last_memory = last_memory
-        #     self.last_output = last_output
-        #     self.last_word = last_word
-        #     self.memory = memory
-        #     self.output = output
-        #     self.probs = probs
+            predictions_correct = tf.stack(predictions_correct, axis = 1)
+            accuracy = tf.reduce_sum(predictions_correct) \
+                       / tf.reduce_sum(masks)
+
+        self.contexts = contexts
+        if self.is_train:
+            self.sentences = sentences
+            self.masks = masks
+            self.total_loss = total_loss
+            self.cross_entropy_loss = cross_entropy_loss
+            self.attention_loss = attention_loss
+            self.reg_loss = reg_loss
+            self.accuracy = accuracy
+            self.attentions = attentions
+        else:
+            self.initial_memory = initial_memory
+            self.initial_output = initial_output
+            self.last_memory = last_memory
+            self.last_output = last_output
+            self.last_word = last_word
+            self.memory = memory
+            self.output = output
+            self.probs = probs
 
         print("RNN built.")
 
