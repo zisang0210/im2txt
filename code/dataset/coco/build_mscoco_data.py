@@ -183,20 +183,25 @@ def _int64_feature(value):
   """Wrapper for inserting an int64 Feature into a SequenceExample proto."""
   return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
+def _float_feature(value):
+  return tf.train.Feature(float_list=tf.train.FloatList(value=[value]))
 
 def _bytes_feature(value):
   """Wrapper for inserting a bytes Feature into a SequenceExample proto."""
-  return tf.train.Feature(bytes_list=tf.train.BytesList(value=[str(value)]))
+  return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
 def _int64_feature_list(values):
   """Wrapper for inserting an int64 FeatureList into a SequenceExample proto."""
   return tf.train.FeatureList(feature=[_int64_feature(v) for v in values])
 
+def _float_feature_list(values):
+  """Wrapper for inserting an float FeatureList into a SequenceExample proto."""
+  return tf.train.FeatureList(feature=[_float_feature(v) for v in values])
 
 def _bytes_feature_list(values):
   """Wrapper for inserting a bytes FeatureList into a SequenceExample proto."""
-  return tf.train.FeatureList(feature=[_bytes_feature(v) for v in values])
+  return tf.train.FeatureList(feature=[_bytes_feature(bytes(v, encoding = "utf8")) for v in values])
 
 
 def _to_sequence_example(image, decoder, vocab):
@@ -210,7 +215,7 @@ def _to_sequence_example(image, decoder, vocab):
   Returns:
     A SequenceExample proto.
   """
-  with tf.gfile.FastGFile(image.filename, "r") as f:
+  with tf.gfile.FastGFile(image.filename, "rb") as f:
     encoded_image = f.read()
 
   try:
@@ -227,9 +232,20 @@ def _to_sequence_example(image, decoder, vocab):
   assert len(image.captions) == 1
   caption = image.captions[0]
   caption_ids = [vocab.word_to_id(word) for word in caption]
+  caption_num_words = len(caption_ids)
+  if caption_num_words > 21:
+    caption_ids = caption_ids[:21]
+    caption_num_words = 21
+
+  caption_fix_len = np.zeros(21,dtype = np.int32)
+  current_masks = np.zeros(21,dtype=np.float32)
+  caption_fix_len[:caption_num_words] = np.array(caption_ids)
+  current_masks[:caption_num_words] = 1.0
+
   feature_lists = tf.train.FeatureLists(feature_list={
       "image/caption": _bytes_feature_list(caption),
-      "image/caption_ids": _int64_feature_list(caption_ids)
+      "image/caption_ids": _int64_feature_list(caption_fix_len),
+      "image/caption_mask": _float_feature_list(current_masks)
   })
   sequence_example = tf.train.SequenceExample(
       context=context, feature_lists=feature_lists)
@@ -263,7 +279,7 @@ def _process_image_files(thread_index, ranges, name, images, decoder, vocab,
   num_images_in_thread = ranges[thread_index][1] - ranges[thread_index][0]
 
   counter = 0
-  for s in xrange(num_shards_per_batch):
+  for s in range(num_shards_per_batch):
     # Generate a sharded version of the file name, e.g. 'train-00002-of-00010'
     shard = thread_index * num_shards_per_batch + s
     output_filename = "%s-%.5d-of-%.5d" % (name, shard, num_shards)
@@ -319,7 +335,7 @@ def _process_dataset(name, images, vocab, num_shards):
   spacing = np.linspace(0, len(images), num_threads + 1).astype(np.int)
   ranges = []
   threads = []
-  for i in xrange(len(spacing) - 1):
+  for i in range(len(spacing) - 1):
     ranges.append([spacing[i], spacing[i + 1]])
 
   # Create a mechanism for monitoring when all threads are finished.
@@ -330,7 +346,7 @@ def _process_dataset(name, images, vocab, num_shards):
 
   # Launch a thread for each batch.
   print("Launching %d threads for spacings: %s" % (num_threads, ranges))
-  for thread_index in xrange(len(ranges)):
+  for thread_index in range(len(ranges)):
     args = (thread_index, ranges, name, images, decoder, vocab, num_shards)
     t = threading.Thread(target=_process_image_files, args=args)
     t.start()
@@ -480,3 +496,4 @@ def main(unused_argv):
 
 if __name__ == "__main__":
   tf.app.run()
+
