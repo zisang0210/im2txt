@@ -2,6 +2,32 @@
 class Config(object):
     """ Wrapper class for various (hyper)parameters. """
     def __init__(self):
+        """Sets the default model hyperparameters."""
+        # File pattern of sharded TFRecord file containing SequenceExample protos.
+        # Must be provided in training and evaluation modes.
+        self.input_file_pattern = "/home/zisang/Documents/code/data/mscoco/train-?????-of-00256"
+
+        # Image format ("jpeg" or "png").
+        self.image_format = "jpeg"
+        # Dimensions of VGG-16 input images.
+        self.image_height = 224
+        self.image_width = 224
+    
+        # Approximate number of values per input shard. Used to ensure sufficient
+        # mixing between shards in training.
+        self.values_per_input_shard = 2300
+        # Minimum number of shards to keep in the input queue.
+        self.input_queue_capacity_factor = 2
+        # Number of threads for prefetching SequenceExample protos.
+        self.num_input_reader_threads = 1
+        # Number of threads for image preprocessing. Should be a multiple of 2.
+        self.num_preprocess_threads = 4
+
+        # Name of the SequenceExample context feature containing image data.
+        self.image_feature_name = "image/data"
+        # Name of the SequenceExample feature list containing integer captions.
+        self.caption_feature_name = "image/caption_ids"
+
         # about the model architecture
         self.cnn = 'vgg16'               # 'vgg16' or 'resnet50'
         self.max_caption_length = 20
@@ -25,6 +51,9 @@ class Config(object):
         self.attention_loss_factor = 0.01
 
         # about the optimization
+        self.max_checkpoints_to_keep = 5
+        self.log_every_n_steps = 1
+        self.number_of_steps= 100
         self.num_epochs = 100
         self.batch_size = 32
         self.optimizer = 'Adam'    # 'Adam', 'RMSProp', 'Momentum' or 'SGD'
@@ -42,12 +71,17 @@ class Config(object):
 
         # about the saver
         self.save_period = 1000
-        self.save_dir = './models/'
-        self.summary_dir = './summary/'
+        self.save_dir = '../output/models/'
+        self.summary_dir = '../output/summary/'
 
         # about the vocabulary
         self.vocabulary_file = './vocabulary.csv'
-        self.vocabulary_size = 5000
+        # Number of unique words in the vocab (plus 1, for <UNK>).
+        # The default value is larger than the expected actual vocab size to allow
+        # for differences between tokenizer versions used in preprocessing. There is
+        # no harm in using a value greater than the actual vocab size, but using a
+        # value less than the actual vocab size will result in an error.
+        self.vocabulary_size = 12000
 
         # about the training
         self.train_image_dir = './train/images/'

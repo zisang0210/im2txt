@@ -1,16 +1,96 @@
 import tensorflow as tf
+from tensorflow.python.ops import array_ops
 import numpy as np
 
 from base_model import BaseModel
+from utils import inputs as input_ops
+from utils import image_processing
 
 class CaptionGenerator(BaseModel):
     def build(self):
         """ Build the model. """
+        self.build_inputs()
         self.build_cnn()
         self.build_rnn()
         if self.is_train:
             self.build_optimizer()
             self.build_summary()
+
+    def build_inputs(self):
+        """Input prefetching, preprocessing and batching.
+
+        Outputs:
+            self.images
+            self.input_seqs
+            self.target_seqs (training and eval only)
+            self.input_mask (training and eval only)
+        """
+        if self.is_train:
+            # Prefetch serialized SequenceExample protos.
+            input_queue = input_ops.prefetch_input_data(
+                    self.reader,
+                    self.config.input_file_pattern,
+                    is_training=self.is_train,
+                    batch_size=self.config.batch_size,
+                    values_per_shard=self.config.values_per_input_shard,
+                    input_queue_capacity_factor=self.config.input_queue_capacity_factor,
+                    num_reader_threads=self.config.num_input_reader_threads)
+
+            # Image processing and random distortion. Split across multiple threads
+            # with each thread applying a slightly different distortion.
+            assert self.config.num_preprocess_threads % 2 == 0
+            images_and_captions = []
+            for thread_id in range(self.config.num_preprocess_threads):
+                serialized_sequence_example = input_queue.dequeue()
+                encoded_image, caption = input_ops.parse_sequence_example(
+                        serialized_sequence_example,
+                        image_feature=self.config.image_feature_name,
+                        caption_feature=self.config.caption_feature_name)
+                image = self.process_image(encoded_image, thread_id=thread_id)
+                images_and_captions.append([image, caption])
+
+            # Batch inputs.
+            queue_capacity = (2 * self.config.num_preprocess_threads *
+                                                self.config.batch_size)
+            images, captions, input_mask = (
+                    input_ops.batch_with_dynamic_pad(images_and_captions,
+                                                                                     batch_size=self.config.batch_size,
+                                                                                     queue_capacity=queue_capacity))
+
+        else:
+            # In inference mode, images and inputs are fed via placeholders.
+            image_feed = tf.placeholder(dtype=tf.string, shape=[], name="image_feed")
+            input_feed = tf.placeholder(dtype=tf.int64,
+                                                                    shape=[None],  # batch_size
+                                                                    name="input_feed")
+            # Process image and insert batch dimensions.
+            images = tf.expand_dims(self.process_image(image_feed), 0)
+            input_seqs = tf.expand_dims(input_feed, 1)
+
+            # No target sequences or input mask in inference mode.
+            input_mask = None
+        
+        self.images = images
+        self.captions = captions
+        self.input_mask = input_mask
+
+    def process_image(self, encoded_image, thread_id=0):
+        """Decodes and processes an image string.
+
+        Args:
+            encoded_image: A scalar string Tensor; the encoded image.
+            thread_id: Preprocessing thread id used to select the ordering of color
+                distortions.
+
+        Returns:
+            A float32 Tensor of shape [height, width, 3]; the processed image.
+        """
+        return image_processing.process_image(encoded_image,
+                                                                                    is_training=self.is_train,
+                                                                                    height=self.config.image_height,
+                                                                                    width=self.config.image_width,
+                                                                                    thread_id=thread_id,
+                                                                                    image_format=self.config.image_format)
 
     def build_cnn(self):
         """ Build the CNN. """
@@ -25,9 +105,7 @@ class CaptionGenerator(BaseModel):
         """ Build the VGG16 net. """
         config = self.config
 
-        images = tf.placeholder(
-            dtype = tf.float32,
-            shape = [config.batch_size] + self.image_shape)
+        images = self.images
 
         conv1_1_feats = self.nn.conv2d(images, 64, name = 'conv1_1')
         conv1_2_feats = self.nn.conv2d(conv1_1_feats, 64, name = 'conv1_2')
@@ -57,15 +135,12 @@ class CaptionGenerator(BaseModel):
         self.conv_feats = reshaped_conv5_3_feats
         self.num_ctx = 196
         self.dim_ctx = 512
-        self.images = images
 
     def build_resnet50(self):
         """ Build the ResNet50. """
         config = self.config
 
-        images = tf.placeholder(
-            dtype = tf.float32,
-            shape = [config.batch_size] + self.image_shape)
+        images = self.images
 
         conv1_feats = self.nn.conv2d(images,
                                   filters = 64,
@@ -106,7 +181,6 @@ class CaptionGenerator(BaseModel):
         self.conv_feats = reshaped_res5c_feats
         self.num_ctx = 49
         self.dim_ctx = 2048
-        self.images = images
 
     def resnet_block(self, inputs, name1, name2, c, s=2):
         """ A basic block of ResNet. """
@@ -195,12 +269,8 @@ class CaptionGenerator(BaseModel):
         # Setup the placeholders
         if self.is_train:
             contexts = self.conv_feats
-            sentences = tf.placeholder(
-                dtype = tf.int32,
-                shape = [config.batch_size, config.max_caption_length])
-            masks = tf.placeholder(
-                dtype = tf.float32,
-                shape = [config.batch_size, config.max_caption_length])
+            sentences = self.captions
+            masks = self.input_mask
         else:
             contexts = tf.placeholder(
                 dtype = tf.float32,
@@ -247,26 +317,29 @@ class CaptionGenerator(BaseModel):
             alphas = []
             cross_entropies = []
             predictions_correct = []
-            num_steps = config.max_caption_length
+            num_steps = array_ops.shape(sentences)[1]
             last_output = initial_output
             last_memory = initial_memory
-            last_word = tf.zeros([config.batch_size], tf.int32)
+            last_word = sentences[:, 0]
         else:
             num_steps = 1
         last_state = last_memory, last_output
 
-        # Generate the words one by one
-        for idx in range(num_steps):
+        idx=tf.constant(0,dtype=tf.int32,name='idx')
+
+        # # Generate the words one by one
+        # for idx in range(num_steps):
+        def _time_step(idx,last_output,last_memory,last_state,last_word):
             # Attention mechanism
             with tf.variable_scope("attend"):
                 alpha = self.attend(contexts, last_output)
                 context = tf.reduce_sum(contexts*tf.expand_dims(alpha, 2),
                                         axis = 1)
-                if self.is_train:
-                    tiled_masks = tf.tile(tf.expand_dims(masks[:, idx], 1),
-                                         [1, self.num_ctx])
-                    masked_alpha = alpha * tiled_masks
-                    alphas.append(tf.reshape(masked_alpha, [-1]))
+           #      if self.is_train:
+           #          tiled_masks = tf.tile(tf.expand_dims(masks[:, idx], 1),
+           #                               [1, self.num_ctx])
+           #          masked_alpha = alpha * tiled_masks
+           #          alphas.append(tf.reshape(masked_alpha, [-1]))
 
             # Embed the last word
             with tf.variable_scope("word_embedding"):
@@ -278,80 +351,86 @@ class CaptionGenerator(BaseModel):
                 output, state = lstm(current_input, last_state)
                 memory, _ = state
 
-            # Decode the expanded output of LSTM into a word
-            with tf.variable_scope("decode"):
-                expanded_output = tf.concat([output,
-                                             context,
-                                             word_embed],
-                                             axis = 1)
-                logits = self.decode(expanded_output)
-                probs = tf.nn.softmax(logits)
-                prediction = tf.argmax(logits, 1)
-                predictions.append(prediction)
+           #  # Decode the expanded output of LSTM into a word
+           #  with tf.variable_scope("decode"):
+           #      expanded_output = tf.concat([output,
+           #                                   context,
+           #                                   word_embed],
+           #                                   axis = 1)
+           #      logits = self.decode(expanded_output)
+           #      probs = tf.nn.softmax(logits)
+           #      prediction = tf.argmax(logits, 1)
+           #      predictions.append(prediction)
 
-            # Compute the loss for this step, if necessary
+           #  # Compute the loss for this step, if necessary
             if self.is_train:
-                cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
-                    labels = sentences[:, idx],
-                    logits = logits)
-                masked_cross_entropy = cross_entropy * masks[:, idx]
-                cross_entropies.append(masked_cross_entropy)
+           #      cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+           #          labels = sentences[:, idx],
+           #          logits = logits)
+           #      masked_cross_entropy = cross_entropy * masks[:, idx]
+           #      cross_entropies.append(masked_cross_entropy)
 
-                ground_truth = tf.cast(sentences[:, idx], tf.int64)
-                prediction_correct = tf.where(
-                    tf.equal(prediction, ground_truth),
-                    tf.cast(masks[:, idx], tf.float32),
-                    tf.cast(tf.zeros_like(prediction), tf.float32))
-                predictions_correct.append(prediction_correct)
+           #      ground_truth = tf.cast(sentences[:, idx], tf.int64)
+           #      prediction_correct = tf.where(
+           #          tf.equal(prediction, ground_truth),
+           #          tf.cast(masks[:, idx], tf.float32),
+           #          tf.cast(tf.zeros_like(prediction), tf.float32))
+           #      predictions_correct.append(prediction_correct)
 
-                last_output = output
-                last_memory = memory
+           #      last_output = output
+           #      last_memory = memory
                 last_state = state
                 last_word = sentences[:, idx]
 
-            tf.get_variable_scope().reuse_variables()
+           #  tf.get_variable_scope().reuse_variables()
+            return (idx+1,last_output,last_memory,last_state,last_word)
 
-        # Compute the final loss, if necessary
-        if self.is_train:
-            cross_entropies = tf.stack(cross_entropies, axis = 1)
-            cross_entropy_loss = tf.reduce_sum(cross_entropies) \
-                                 / tf.reduce_sum(masks)
+        _, last_output, last_memory, last_state, last_word = tf.while_loop(
+            cond=lambda idx,*_:idx<num_steps,
+            body=_time_step,
+            loop_vars=(idx,last_output,last_memory,last_state,last_word)
+            )
+        # # Compute the final loss, if necessary
+        # if self.is_train:
+        #     cross_entropies = tf.stack(cross_entropies, axis = 1)
+        #     cross_entropy_loss = tf.reduce_sum(cross_entropies) \
+        #                          / tf.reduce_sum(masks)
 
-            alphas = tf.stack(alphas, axis = 1)
-            alphas = tf.reshape(alphas, [config.batch_size, self.num_ctx, -1])
-            attentions = tf.reduce_sum(alphas, axis = 2)
-            diffs = tf.ones_like(attentions) - attentions
-            attention_loss = config.attention_loss_factor \
-                             * tf.nn.l2_loss(diffs) \
-                             / (config.batch_size * self.num_ctx)
+        #     alphas = tf.stack(alphas, axis = 1)
+        #     alphas = tf.reshape(alphas, [config.batch_size, self.num_ctx, -1])
+        #     attentions = tf.reduce_sum(alphas, axis = 2)
+        #     diffs = tf.ones_like(attentions) - attentions
+        #     attention_loss = config.attention_loss_factor \
+        #                      * tf.nn.l2_loss(diffs) \
+        #                      / (config.batch_size * self.num_ctx)
 
-            reg_loss = tf.losses.get_regularization_loss()
+        #     reg_loss = tf.losses.get_regularization_loss()
 
-            total_loss = cross_entropy_loss + attention_loss + reg_loss
+        #     total_loss = cross_entropy_loss + attention_loss + reg_loss
 
-            predictions_correct = tf.stack(predictions_correct, axis = 1)
-            accuracy = tf.reduce_sum(predictions_correct) \
-                       / tf.reduce_sum(masks)
+        #     predictions_correct = tf.stack(predictions_correct, axis = 1)
+        #     accuracy = tf.reduce_sum(predictions_correct) \
+        #                / tf.reduce_sum(masks)
 
-        self.contexts = contexts
-        if self.is_train:
-            self.sentences = sentences
-            self.masks = masks
-            self.total_loss = total_loss
-            self.cross_entropy_loss = cross_entropy_loss
-            self.attention_loss = attention_loss
-            self.reg_loss = reg_loss
-            self.accuracy = accuracy
-            self.attentions = attentions
-        else:
-            self.initial_memory = initial_memory
-            self.initial_output = initial_output
-            self.last_memory = last_memory
-            self.last_output = last_output
-            self.last_word = last_word
-            self.memory = memory
-            self.output = output
-            self.probs = probs
+        # self.contexts = contexts
+        # if self.is_train:
+        #     self.sentences = sentences
+        #     self.masks = masks
+        #     self.total_loss = total_loss
+        #     self.cross_entropy_loss = cross_entropy_loss
+        #     self.attention_loss = attention_loss
+        #     self.reg_loss = reg_loss
+        #     self.accuracy = accuracy
+        #     self.attentions = attentions
+        # else:
+        #     self.initial_memory = initial_memory
+        #     self.initial_output = initial_output
+        #     self.last_memory = last_memory
+        #     self.last_output = last_output
+        #     self.last_word = last_word
+        #     self.memory = memory
+        #     self.output = output
+        #     self.probs = probs
 
         print("RNN built.")
 
