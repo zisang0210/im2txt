@@ -18,48 +18,61 @@ class BaseModel(object):
         self.config = config
         self.is_train = True if config.phase == 'train' else False
         self.train_cnn = self.is_train and config.train_cnn
-        self.image_loader = ImageLoader('/home/tf/tensorflow/im2txt-master/code/utils/ilsvrc_2012_mean.npy')
+        self.image_loader = ImageLoader('./utils/ilsvrc_2012_mean.npy')
         self.image_shape = [224, 224, 3]
         self.nn = NN(config)
         self.global_step = tf.Variable(0,
                                        name = 'global_step',
                                        trainable = False)
+        self.reader = tf.TFRecordReader()
         self.build()
 
     def build(self):
         raise NotImplementedError()
 
-    def train(self, sess, train_data):
+    def train(self):
         """ Train the model using the COCO train2014 data. """
         print("Training the model...")
-        config = self.config
 
-        if not os.path.exists(config.summary_dir):
-            os.mkdir(config.summary_dir)
-        train_writer = tf.summary.FileWriter(config.summary_dir,
-                                             sess.graph)
+        # Set up the Saver for saving and restoring model checkpoints.
+        saver = tf.train.Saver(max_to_keep=self.config.max_checkpoints_to_keep)
+        # Run training.
+        tf.contrib.slim.learning.train(
+            self.opt_op,
+            self.config.save_dir,
+            log_every_n_steps=self.config.log_every_n_steps,
+            graph=tf.get_default_graph(),
+            global_step=self.global_step,
+            number_of_steps=self.config.number_of_steps,
+            init_fn=None,
+            saver=saver)
 
-        for _ in tqdm(list(range(config.num_epochs)), desc='epoch'):
-            for _ in tqdm(list(range(train_data.num_batches)), desc='batch'):
-                batch = train_data.next_batch()
-                image_files, sentences, masks = batch
-                #print('===imagefile===', image_files)
-                images = self.image_loader.load_images(image_files)
+        # config = self.config
 
-                feed_dict = {self.images: images,
-                             self.sentences: sentences,
-                             self.masks: masks}
-                _, summary, global_step = sess.run([self.opt_op,
-                                                    self.summary,
-                                                    self.global_step],
-                                                    feed_dict=feed_dict)
-                if (global_step + 1) % config.save_period == 0:
-                    self.save()
-                train_writer.add_summary(summary, global_step)
-            train_data.reset()
+        # if not os.path.exists(config.summary_dir):
+        #     os.mkdir(config.summary_dir)
+        # train_writer = tf.summary.FileWriter(config.summary_dir,
+        #                                      sess.graph)
 
-        self.save()
-        train_writer.close()
+        # for _ in tqdm(list(range(config.num_epochs)), desc='epoch'):
+        #     for _ in tqdm(list(range(train_data.num_batches)), desc='batch'):
+        #         batch = train_data.next_batch()
+        #         image_files, sentences, masks = batch
+        #         images = self.image_loader.load_images(image_files)
+        #         feed_dict = {self.images: images,
+        #                      self.sentences: sentences,
+        #                      self.masks: masks}
+        #         _, summary, global_step = sess.run([self.opt_op,
+        #                                             self.summary,
+        #                                             self.global_step],
+        #                                             feed_dict=feed_dict)
+        #         if (global_step + 1) % config.save_period == 0:
+        #             self.save()
+        #         train_writer.add_summary(summary, global_step)
+        #     train_data.reset()
+
+        # self.save()
+        # train_writer.close()
         print("Training complete.")
 
     def eval(self, sess, eval_gt_coco, eval_data, vocabulary):
@@ -284,3 +297,4 @@ class BaseModel(object):
                     except ValueError:
                         pass
         print("%d tensors loaded." %count)
+>>>>>>> master

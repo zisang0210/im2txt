@@ -2,14 +2,45 @@
 class Config(object):
     """ Wrapper class for various (hyper)parameters. """
     def __init__(self):
+        """Sets the default model hyperparameters."""
+        # File pattern of sharded TFRecord file containing SequenceExample protos.
+        # Must be provided in training and evaluation modes.
+        self.input_file_pattern = "/home/zisang/im2txt/data/coco/train-?????-of-00256"
+
+        # Image format ("jpeg" or "png").
+        self.image_format = "jpeg"
+        # Dimensions of VGG-16 input images.
+        self.image_height = 224
+        self.image_width = 224
+    
+        # Approximate number of values per input shard. Used to ensure sufficient
+        # mixing between shards in training.
+        self.values_per_input_shard = 100
+        # Minimum number of shards to keep in the input queue.
+        self.input_queue_capacity_factor = 2
+        # Number of threads for prefetching SequenceExample protos.
+        self.num_input_reader_threads = 1
+        # Number of threads for image preprocessing. Should be a multiple of 2.
+        self.num_preprocess_threads = 2
+
+        # Name of the SequenceExample context feature containing image data.
+        self.image_feature_name = "image/data"
+        # Name of the SequenceExample feature list containing integer captions.
+        self.caption_feature_name = "image/caption_ids"
+        # Name of the SequenceExample feature list containing float caption masks.
+        self.mask_feature_name = "image/caption_mask"
+
         # about the model architecture
-        self.cnn = 'vgg16'               # 'vgg16' or 'resnet50'
+        self.cnn = 'rpn'               # 'rpn', 'vgg16' or 'resnet50'
+        #model config
+        self.pipeline_config_path='./faster_rcnn_resnet50_coco.config'
+
         self.max_caption_length = 20
         self.dim_embedding = 512
         self.num_lstm_units = 512
         self.num_initalize_layers = 2    # 1 or 2
         self.dim_initalize_layer = 512
-        self.num_attend_layers = 1       # 1 or 2
+        self.num_attend_layers = 2       # 1 or 2
         self.dim_attend_layer = 512
         self.num_decode_layers = 2       # 1 or 2
         self.dim_decode_layer = 1024
@@ -25,6 +56,9 @@ class Config(object):
         self.attention_loss_factor = 0.01
 
         # about the optimization
+        self.max_checkpoints_to_keep = 5
+        self.log_every_n_steps = 1
+        self.number_of_steps= 10
         self.num_epochs = 100
         self.batch_size = 32
         self.optimizer = 'Adam'    # 'Adam', 'RMSProp', 'Momentum' or 'SGD'
@@ -42,21 +76,23 @@ class Config(object):
 
         # about the saver
         self.save_period = 1000
-        self.save_dir = './models/'
-        self.summary_dir = './summary/'
+        self.save_dir = '../output/models/'
+        self.summary_dir = '../output/summary/'
 
         # about the vocabulary
         self.vocabulary_file = './vocabulary.csv'
-        self.vocabulary_size = 5000
-
-        #model config
-        self.pipeline_config_path='/home/tf/tensorflow/im2txt-master/code/faster_rcnn_resnet50_coco.config'
+        # Number of unique words in the vocab (plus 1, for <UNK>).
+        # The default value is larger than the expected actual vocab size to allow
+        # for differences between tokenizer versions used in preprocessing. There is
+        # no harm in using a value greater than the actual vocab size, but using a
+        # value less than the actual vocab size will result in an error.
+        self.vocabulary_size = 12000
 
         # about the training
-        self.train_image_dir = '/home/tf/tensorflow/im2txt-master/code/train/images/'
-        self.train_caption_file = '/home/tf/tensorflow/im2txt-master/code/train/captions_train2014.json'
-        self.temp_annotation_file = '/home/tf/tensorflow/im2txt-master/code/train/anns.csv'
-        self.temp_data_file = '/home/tf/tensorflow/im2txt-master/code/train/data.npy'
+        self.train_image_dir = './train/images/'
+        self.train_caption_file = './train/captions_train2014.json'
+        self.temp_annotation_file = './train/anns.csv'
+        self.temp_data_file = './train/data.npy'
 
         # about the evaluation
         self.eval_image_dir = './val/images/'
@@ -69,3 +105,4 @@ class Config(object):
         self.test_image_dir = './test/images/'
         self.test_result_dir = './test/results/'
         self.test_result_file = './test/results.csv'
+>>>>>>> master

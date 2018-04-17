@@ -1,36 +1,145 @@
 import tensorflow as tf
 import numpy as np
 import functools
-
 from base_model import BaseModel
+from utils import inputs as input_ops
+from utils import image_processing
 from object_detection.builders import model_builder
 from object_detection.utils import config_util
 
 class CaptionGenerator(BaseModel):
     def build(self):
         """ Build the model. """
-        self.build_rpn()
+        self.build_inputs()
+        self.build_cnn()
         self.build_rnn()
         if self.is_train:
             self.build_optimizer()
             self.build_summary()
 
+    def build_inputs(self):
+        """Input prefetching, preprocessing and batching.
+
+        Outputs:
+            self.images
+            self.input_seqs
+            self.target_seqs (training and eval only)
+            self.input_mask (training and eval only)
+        """
+        if self.is_train:
+            # Prefetch serialized SequenceExample protos.
+            input_queue = input_ops.prefetch_input_data(
+                    self.reader,
+                    self.config.input_file_pattern,
+                    is_training=self.is_train,
+                    batch_size=self.config.batch_size,
+                    values_per_shard=self.config.values_per_input_shard,
+                    input_queue_capacity_factor=self.config.input_queue_capacity_factor,
+                    num_reader_threads=self.config.num_input_reader_threads)
+
+            # Image processing and random distortion. Split across multiple threads
+            # with each thread applying a slightly different distortion.
+            assert self.config.num_preprocess_threads % 2 == 0
+            images_and_captions = []
+            for thread_id in range(self.config.num_preprocess_threads):
+                serialized_sequence_example = input_queue.dequeue()
+                encoded_image, caption, mask = input_ops.parse_sequence_example(
+                        serialized_sequence_example,
+                        image_feature=self.config.image_feature_name,
+                        caption_feature=self.config.caption_feature_name,
+                        mask_feature=self.config.mask_feature_name)
+                image = self.process_image(encoded_image, thread_id=thread_id)
+                images_and_captions.append([image, caption,mask])
+
+            # Batch inputs.
+            queue_capacity = (2 * self.config.num_preprocess_threads *
+                                                self.config.batch_size)
+            images, captions, input_mask = (
+                    input_ops.batch_with_dynamic_pad(images_and_captions,
+                                                                                     batch_size=self.config.batch_size,
+                                                                                     queue_capacity=queue_capacity))
+
+        else:
+            # In inference mode, images and inputs are fed via placeholders.
+            image_feed = tf.placeholder(dtype=tf.string, shape=[], name="image_feed")
+            input_feed = tf.placeholder(dtype=tf.int64,
+                                                                    shape=[None],  # batch_size
+                                                                    name="input_feed")
+            # Process image and insert batch dimensions.
+            images = tf.expand_dims(self.process_image(image_feed), 0)
+            input_seqs = tf.expand_dims(input_feed, 1)
+
+            # No target sequences or input mask in inference mode.
+            input_mask = None
+        
+        self.images = images
+        self.captions = captions
+        self.input_mask = input_mask
+
+    def process_image(self, encoded_image, thread_id=0):
+        """Decodes and processes an image string.
+
+        Args:
+            encoded_image: A scalar string Tensor; the encoded image.
+            thread_id: Preprocessing thread id used to select the ordering of color
+                distortions.
+
+        Returns:
+            A float32 Tensor of shape [height, width, 3]; the processed image.
+        """
+        return image_processing.process_image(encoded_image,
+                                                                                    is_training=self.is_train,
+                                                                                    height=self.config.image_height,
+                                                                                    width=self.config.image_width,
+                                                                                    thread_id=thread_id,
+                                                                                    image_format=self.config.image_format)
+
     def build_cnn(self):
         """ Build the CNN. """
         print("Building the CNN...")
-        if self.config.cnn == 'vgg16':
+        if self.config.cnn == 'rpn'
+            self.build_rpn()
+        elif self.config.cnn == 'vgg16':
             self.build_vgg16()
         else:
             self.build_resnet50()
         print("CNN built.")
 
-    def build_vgg16(self):
-        """ Build the VGG16 net. """
+    def build_rpn(self):
+
         config = self.config
 
         images = tf.placeholder(
             dtype = tf.float32,
             shape = [config.batch_size] + self.image_shape)
+        if config.pipeline_config_path:
+            model_configs = config_util.get_configs_from_pipeline_file(
+                config.pipeline_config_path)
+
+        model_config = model_configs['model']
+
+        if self.is_train:
+            model_fn = functools.partial(
+                model_builder.build,
+                model_config=model_config,
+                is_training=True)
+        detection_model = model_fn()
+        image_preprocessed = detection_model.preprocess(images) 
+        features = detection_model.predict(image_preprocessed)
+        feature = features['rpn_box_predictor_features']
+        feature_reshaped = tf.reshape(feature,
+                            [config.batch_size, 1444, 512])
+        print(feature)
+        self.num_ctx = 1444
+        self.dim_ctx = 512
+        self.conv_feats = feature_reshaped
+        self.images = images
+
+    def build_vgg16(self):
+        """ Build the VGG16 net. """
+        config = self.config
+
+        images = self.images
 
         conv1_1_feats = self.nn.conv2d(images, 64, name = 'conv1_1')
         conv1_2_feats = self.nn.conv2d(conv1_1_feats, 64, name = 'conv1_2')
@@ -60,15 +169,12 @@ class CaptionGenerator(BaseModel):
         self.conv_feats = reshaped_conv5_3_feats
         self.num_ctx = 196
         self.dim_ctx = 512
-        self.images = images
 
     def build_resnet50(self):
         """ Build the ResNet50. """
         config = self.config
 
-        images = tf.placeholder(
-            dtype = tf.float32,
-            shape = [config.batch_size] + self.image_shape)
+        images = self.images
 
         conv1_feats = self.nn.conv2d(images,
                                   filters = 64,
@@ -109,7 +215,6 @@ class CaptionGenerator(BaseModel):
         self.conv_feats = reshaped_res5c_feats
         self.num_ctx = 49
         self.dim_ctx = 2048
-        self.images = images
 
     def resnet_block(self, inputs, name1, name2, c, s=2):
         """ A basic block of ResNet. """
@@ -198,12 +303,8 @@ class CaptionGenerator(BaseModel):
         # Setup the placeholders
         if self.is_train:
             contexts = self.conv_feats
-            sentences = tf.placeholder(
-                dtype = tf.int32,
-                shape = [config.batch_size, config.max_caption_length])
-            masks = tf.placeholder(
-                dtype = tf.float32,
-                shape = [config.batch_size, config.max_caption_length])
+            sentences = self.captions
+            masks = self.input_mask
         else:
             contexts = tf.placeholder(
                 dtype = tf.float32,
@@ -250,10 +351,10 @@ class CaptionGenerator(BaseModel):
             alphas = []
             cross_entropies = []
             predictions_correct = []
-            num_steps = config.max_caption_length
+            num_steps = self.config.max_caption_length
             last_output = initial_output
             last_memory = initial_memory
-            last_word = tf.zeros([config.batch_size], tf.int32)
+            last_word = sentences[:, 0]
         else:
             num_steps = 1
         last_state = last_memory, last_output
@@ -313,6 +414,7 @@ class CaptionGenerator(BaseModel):
                 last_word = sentences[:, idx]
 
             tf.get_variable_scope().reuse_variables()
+
 
         # Compute the final loss, if necessary
         if self.is_train:
@@ -398,8 +500,6 @@ class CaptionGenerator(BaseModel):
     def attend(self, contexts, output):
         """ Attention Mechanism. """
         config = self.config
-        #print('contexts', contexts)
-        #print('output',   output)
         reshaped_contexts = tf.reshape(contexts, [-1, self.dim_ctx])
         reshaped_contexts = self.nn.dropout(reshaped_contexts)
         output = self.nn.dropout(output)
@@ -411,13 +511,11 @@ class CaptionGenerator(BaseModel):
                                     use_bias = False,
                                     name = 'fc_a')
             logits1 = tf.reshape(logits1, [-1, self.num_ctx])
-            #print('logits1', logits1)
             logits2 = self.nn.dense(output,
                                     units = self.num_ctx,
                                     activation = None,
                                     use_bias = False,
                                     name = 'fc_b')
-            #print('logits2', logits2)
             logits = logits1 + logits2
         else:
             # use 2 fc layers to attend
@@ -547,34 +645,4 @@ class CaptionGenerator(BaseModel):
         tf.summary.scalar('max', tf.reduce_max(var))
         tf.summary.scalar('min', tf.reduce_min(var))
         tf.summary.histogram('histogram', var)
-
-
-    def build_rpn(self):
-
-        config = self.config
-
-        images = tf.placeholder(
-            dtype = tf.float32,
-            shape = [config.batch_size] + self.image_shape)
-        if config.pipeline_config_path:
-            model_configs = config_util.get_configs_from_pipeline_file(
-                config.pipeline_config_path)
-
-        model_config = model_configs['model']
-
-        if self.is_train:
-            model_fn = functools.partial(
-                model_builder.build,
-                model_config=model_config,
-                is_training=True)
-        detection_model = model_fn()
-        image_preprocessed = detection_model.preprocess(images) 
-        features = detection_model.predict(image_preprocessed)
-        feature = features['rpn_box_predictor_features']
-        feature_reshaped = tf.reshape(feature,
-                            [config.batch_size, 1444, 512])
-        print(feature)
-        self.num_ctx = 1444
-        self.dim_ctx = 512
-        self.conv_feats = feature_reshaped
-        self.images = images
+>>>>>>> master
