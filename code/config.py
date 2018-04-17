@@ -105,4 +105,3 @@ class Config(object):
         self.test_image_dir = './test/images/'
         self.test_result_dir = './test/results/'
         self.test_result_file = './test/results.csv'
->>>>>>> master

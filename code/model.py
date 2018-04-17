@@ -97,7 +97,7 @@ class CaptionGenerator(BaseModel):
     def build_cnn(self):
         """ Build the CNN. """
         print("Building the CNN...")
-        if self.config.cnn == 'rpn'
+        if self.config.cnn == 'rpn':
             self.build_rpn()
         elif self.config.cnn == 'vgg16':
             self.build_vgg16()
@@ -109,9 +109,8 @@ class CaptionGenerator(BaseModel):
 
         config = self.config
 
-        images = tf.placeholder(
-            dtype = tf.float32,
-            shape = [config.batch_size] + self.image_shape)
+        images = self.images
+        
         if config.pipeline_config_path:
             model_configs = config_util.get_configs_from_pipeline_file(
                 config.pipeline_config_path)
@@ -645,4 +644,3 @@ class CaptionGenerator(BaseModel):
         tf.summary.scalar('max', tf.reduce_max(var))
         tf.summary.scalar('min', tf.reduce_min(var))
         tf.summary.histogram('histogram', var)
->>>>>>> master

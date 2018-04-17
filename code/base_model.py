@@ -297,4 +297,3 @@ class BaseModel(object):
                     except ValueError:
                         pass
         print("%d tensors loaded." %count)
->>>>>>> master
