@@ -11,7 +11,50 @@ This neural system for image captioning is roughly based on the paper "Show, Att
 * **tqdm** ([instructions](https://pypi.python.org/pypi/tqdm))
 
 ### Usage
-* **Preparation:** Download the COCO train2014 and val2014 data [here](http://cocodataset.org/#download). Put the COCO train2014 images in the folder `data/coco/train/images`, and put the file `captions_train2014.json` in the folder `data/coco/train`. Similarly, put the COCO val2014 images in the folder `data/coco/val/images`, and put the file `captions_val2014.json` in the folder `data/coco/val`. Furthermore, download the pretrained VGG16 net [here](https://app.box.com/s/idt5khauxsamcg3y69jz13w6sc6122ph) or ResNet50 net [here](https://app.box.com/s/17vthb1zl0zeh340m4gaw0luuf2vscne) if you want to use it to initialize the CNN part.
+
+* **tips:**
+```shell
+1. delete all pycache folders under current directory
+find . -name '__pycache__' -type d -exec rm -rf {} \;
+```
+
+* **Dataset Preparing:**
+1. download faster_rcnn_resnet checkpoint
+```shell
+cd data
+wget http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet50_coco_2018_01_28.tar.gz
+tar -xzf faster_rcnn_resnet50_coco_2018_01_28.tar.gz
+```
+2. frozen graph using checkpoint
+```shell
+cd ../code/
+export PYTHONPATH=$PYTHONPATH:./object_detection/
+python ./object_detection/export_inference_graph.py \
+    --input_type image_tensor \
+    --pipeline_config_path ../data/faster_rcnn_resnet50_coco_2018_01_28/pipeline.config --trained_checkpoint_prefix ../data/faster_rcnn_resnet50_coco_2018_01_28/model.ckpt  --output_directory ../data/faster_rcnn_resnet50_coco_2018_01_28/exported_graphs
+cp ../data/faster_rcnn_resnet50_coco_2018_01_28/exported_graphs/frozen_inference_graph.pb  ../data
+```
+3. skip if have download coco dataset, else run the following command to get coco
+```shell
+OUTPUT_DIR="/home/zisang/im2txt"
+sh ./dataset/download_mscoco.sh.sh ../data/coco
+```
+4. get feature for each region proposal(100\*2048)
+```shell
+DATASET_DIR="/home/zisang/Documents/code/data/mscoco/raw-data"
+OUTPUT_DIR="/home/zisang/im2txt/data/coco"
+python ./dataset/coco/build_mscoco_data.py \
+  --graph_path="../data/frozen_inference_graph.pb" \
+  --train_image_dir="${DATASET_DIR}/train2014" \
+  --val_image_dir="${DATASET_DIR}/val2014" \
+  --train_captions_file="${DATASET_DIR}/annotations/captions_train2014.json" \
+  --val_captions_file="${DATASET_DIR}/annotations/captions_val2014.json" \
+  --output_dir="${OUTPUT_DIR}" \
+  --train_shards=1\
+  --num_threads=2\
+  --word_counts_output_file="${OUTPUT_DIR}/word_counts.txt" 
+```
+
 
 * **Training:**
 To train a model using the flickr30k data, first make sure you are under the folder `code`, then setup various parameters in the file `config.py` and then run a command like this:

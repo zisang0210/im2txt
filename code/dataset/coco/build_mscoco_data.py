@@ -94,10 +94,13 @@ import sys
 import threading
 
 
-
+from PIL import Image
 import nltk.tokenize
 import numpy as np
 import tensorflow as tf
+
+tf.flags.DEFINE_string("graph_path", "../data/frozen_inference_graph.pb",
+                       "Faster rcnn forzen graph.")
 
 tf.flags.DEFINE_string("train_image_dir", "/tmp/train2014/",
                        "Training image directory.")
@@ -163,13 +166,30 @@ class Vocabulary(object):
 class ImageDecoder(object):
   """Helper class for decoding images in TensorFlow."""
 
-  def __init__(self):
-    # Create a single TensorFlow Session for all image decoding calls.
-    self._sess = tf.Session()
-
+  def __init__(self,graph_path):
     # TensorFlow ops for JPEG decoding.
     self._encoded_jpeg = tf.placeholder(dtype=tf.string)
     self._decode_jpeg = tf.image.decode_jpeg(self._encoded_jpeg, channels=3)
+
+
+    detection_graph = tf.Graph()
+    with detection_graph.as_default():
+      od_graph_def = tf.GraphDef()
+      with tf.gfile.GFile(graph_path, 'rb') as fid:
+        serialized_graph = fid.read()
+        od_graph_def.ParseFromString(serialized_graph)
+        tf.import_graph_def(od_graph_def, name='')
+
+    with detection_graph.as_default():
+      # Create a single TensorFlow Session for all image decoding calls.
+      with tf.Session(graph=detection_graph) as self._sess:
+
+        self._image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
+        self._proposal_boxes = detection_graph.get_tensor_by_name('proposal_boxes:0')
+        # self._detection_scores = detection_graph.get_tensor_by_name('detection_scores:0')
+        # self._detection_classes = detection_graph.get_tensor_by_name('detection_classes:0')
+        # self._num_detections = detection_graph.get_tensor_by_name('num_detections:0')
+        self._feature = detection_graph.get_tensor_by_name('SecondStageBoxPredictor/AvgPool:0')
 
   def decode_jpeg(self, encoded_jpeg):
     image = self._sess.run(self._decode_jpeg,
@@ -177,6 +197,20 @@ class ImageDecoder(object):
     assert len(image.shape) == 3
     assert image.shape[2] == 3
     return image
+  
+  def extract_faster_rcnn_feature(self, filename):
+    image = Image.open(filename)
+    image_np = self.load_image_into_numpy_array(image)
+    image_np_expanded = np.expand_dims(image_np, axis=0)
+    (boxes,feat) = self._sess.run(
+                        [self._proposal_boxes,self._feature],
+                        feed_dict={self._image_tensor: image_np_expanded})
+    return np.squeeze(boxes), np.squeeze(feat)
+
+  def load_image_into_numpy_array(self, image):
+      (im_width, im_height) = image.size
+      return np.array(image.getdata()).reshape(
+          (im_height, im_width, 3)).astype(np.uint8)
 
 
 def _int64_feature(value):
@@ -215,18 +249,20 @@ def _to_sequence_example(image, decoder, vocab):
   Returns:
     A SequenceExample proto.
   """
-  with tf.gfile.FastGFile(image.filename, "rb") as f:
-    encoded_image = f.read()
+  # code from tensorflow/models im2txt modified by zisang 20180418
+  # with tf.gfile.FastGFile(image.filename, "rb") as f:
+  #   encoded_image = f.read()
 
-  try:
-    decoder.decode_jpeg(encoded_image)
-  except (tf.errors.InvalidArgumentError, AssertionError):
-    print("Skipping file with invalid JPEG data: %s" % image.filename)
-    return
+  # try:
+  #   encoded_image = decoder.decode_jpeg(encoded_image)
+  # except (tf.errors.InvalidArgumentError, AssertionError):
+  #   print("Skipping file with invalid JPEG data: %s" % image.filename)
+  #   return
 
+  bounding_box,feature_map = decoder.extract_faster_rcnn_feature(image.filename)
   context = tf.train.Features(feature={
       "image/image_id": _int64_feature(image.image_id),
-      "image/data": _bytes_feature(encoded_image),
+      "image/data": _bytes_feature(feature_map.tostring()),
   })
 
   assert len(image.captions) == 1
@@ -342,7 +378,7 @@ def _process_dataset(name, images, vocab, num_shards):
   coord = tf.train.Coordinator()
 
   # Create a utility for decoding JPEG images to run sanity checks.
-  decoder = ImageDecoder()
+  decoder = ImageDecoder(FLAGS.graph_path)
 
   # Launch a thread for each batch.
   print("Launching %d threads for spacings: %s" % (num_threads, ranges))
@@ -472,26 +508,27 @@ def main(unused_argv):
   # Load image metadata from caption files.
   mscoco_train_dataset = _load_and_process_metadata(FLAGS.train_captions_file,
                                                     FLAGS.train_image_dir)
-  mscoco_val_dataset = _load_and_process_metadata(FLAGS.val_captions_file,
-                                                  FLAGS.val_image_dir)
+  # mscoco_val_dataset = _load_and_process_metadata(FLAGS.val_captions_file,
+  #                                                 FLAGS.val_image_dir)
 
-  # Redistribute the MSCOCO data as follows:
-  #   train_dataset = 100% of mscoco_train_dataset + 85% of mscoco_val_dataset.
-  #   val_dataset = 5% of mscoco_val_dataset (for validation during training).
-  #   test_dataset = 10% of mscoco_val_dataset (for final evaluation).
-  train_cutoff = int(0.85 * len(mscoco_val_dataset))
-  val_cutoff = int(0.90 * len(mscoco_val_dataset))
-  train_dataset = mscoco_train_dataset + mscoco_val_dataset[0:train_cutoff]
-  val_dataset = mscoco_val_dataset[train_cutoff:val_cutoff]
-  test_dataset = mscoco_val_dataset[val_cutoff:]
+  # # Redistribute the MSCOCO data as follows:
+  # #   train_dataset = 100% of mscoco_train_dataset + 85% of mscoco_val_dataset.
+  # #   val_dataset = 5% of mscoco_val_dataset (for validation during training).
+  # #   test_dataset = 10% of mscoco_val_dataset (for final evaluation).
+  # train_cutoff = int(0.85 * len(mscoco_val_dataset))
+  # val_cutoff = int(0.90 * len(mscoco_val_dataset))
+  train_dataset = mscoco_train_dataset[0:100]
+   # + mscoco_val_dataset[0:train_cutoff]
+  # val_dataset = mscoco_val_dataset[train_cutoff:val_cutoff]
+  # test_dataset = mscoco_val_dataset[val_cutoff:]
 
   # Create vocabulary from the training captions.
   train_captions = [c for image in train_dataset for c in image.captions]
   vocab = _create_vocab(train_captions)
 
   _process_dataset("train", train_dataset, vocab, FLAGS.train_shards)
-  _process_dataset("val", val_dataset, vocab, FLAGS.val_shards)
-  _process_dataset("test", test_dataset, vocab, FLAGS.test_shards)
+  # _process_dataset("val", val_dataset, vocab, FLAGS.val_shards)
+  # _process_dataset("test", test_dataset, vocab, FLAGS.test_shards)
 
 
 if __name__ == "__main__":

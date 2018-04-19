@@ -5,7 +5,7 @@ class NN(object):
     def __init__(self, config):
         self.config = config
         self.is_train = True if config.phase == 'train' else False
-        self.train_cnn = self.is_train and config.train_cnn
+        self.train_cnn = False
         self.prepare()
 
     def prepare(self):

@@ -48,9 +48,11 @@ def parse_sequence_example(serialized, image_feature, caption_feature,mask_featu
       })
 
   encoded_image = context[image_feature]
+  img = tf.decode_raw(encoded_image,tf.float32)
+  img = tf.reshape(img,[100,2048])
   caption = sequence[caption_feature]
   mask = sequence[mask_feature]
-  return encoded_image, caption, mask
+  return img, caption, mask
 
 
 def prefetch_input_data(reader,
@@ -194,7 +196,7 @@ def batch_with_dynamic_pad(images_and_captions,
       images_and_captions,
       batch_size=batch_size,
       capacity=queue_capacity,
-      shapes=[[224,224,3],[21],[21]],
+      shapes=[[100,2048],[21],[21]],
       dynamic_pad=False,
       name="batch_and_pad")
 
