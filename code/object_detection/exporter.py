@@ -246,6 +246,29 @@ def _add_output_tensor_nodes(postprocessed_tensors,
     tf.add_to_collection(output_collection_name, outputs['detection_masks'])
   return outputs
 
+def _add_predict_tensor_nodes(predict_tensors,
+                             output_collection_name='predict_op'):
+  """Adds predict nodes for region proposal boxes and feature.
+
+  Adds the following nodes for output tensors -
+    * proposal_boxes_normalized: float32 tensor of shape [batch_size, num_boxes, 4]
+      containing region proposal boxes(after non maximum surpression).
+
+  Args:
+    predict_tensors: a dictionary containing the following fields
+      'proposal_boxes_normalized': [batch, max_detections, 4]
+    output_collection_name: Name of collection to add output tensors to.
+
+  Returns:
+    A tensor dict containing the added output tensor nodes.
+  """
+  label_id_offset = 1
+  boxes = predict_tensors.get('proposal_boxes_normalized')
+  outputs = {}
+  outputs['proposal_boxes'] = tf.identity(boxes, name='proposal_boxes')
+  for output_key in outputs:
+    tf.add_to_collection(output_collection_name, outputs[output_key])
+  return outputs
 
 def _write_frozen_graph(frozen_graph_path, frozen_graph_def):
   """Writes frozen graph to disk.
@@ -350,9 +373,12 @@ def _export_inference_graph(input_type,
   inputs = tf.to_float(input_tensors)
   preprocessed_inputs = detection_model.preprocess(inputs)
   output_tensors = detection_model.predict(preprocessed_inputs)
-  postprocessed_tensors = detection_model.postprocess(output_tensors)
-  outputs = _add_output_tensor_nodes(postprocessed_tensors,
+  outputs = _add_predict_tensor_nodes(output_tensors,
                                      output_collection_name)
+  
+  # postprocessed_tensors = detection_model.postprocess(output_tensors)
+  # outputs = _add_output_tensor_nodes(postprocessed_tensors,
+  #                                    output_collection_name)
   # Add global step to the graph.
   slim.get_or_create_global_step()
 
@@ -375,7 +401,7 @@ def _export_inference_graph(input_type,
       trained_checkpoint_prefix=checkpoint_to_use)
 
   if additional_output_tensor_names is not None:
-    output_node_names = ','.join(outputs.keys()+additional_output_tensor_names)
+    output_node_names = ','.join(list(outputs.keys())+additional_output_tensor_names)
   else:
     output_node_names = ','.join(outputs.keys())
 
@@ -401,7 +427,7 @@ def export_inference_graph(input_type,
                            input_shape=None,
                            optimize_graph=True,
                            output_collection_name='inference_op',
-                           additional_output_tensor_names=None):
+                           additional_output_tensor_names=['SecondStageBoxPredictor/AvgPool']):
   """Exports inference graph for the model specified in the pipeline config.
 
   Args:

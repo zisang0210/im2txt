@@ -43,12 +43,12 @@ class CaptionGenerator(BaseModel):
             images_and_captions = []
             for thread_id in range(self.config.num_preprocess_threads):
                 serialized_sequence_example = input_queue.dequeue()
-                encoded_image, caption, mask = input_ops.parse_sequence_example(
+                image, caption, mask = input_ops.parse_sequence_example(
                         serialized_sequence_example,
                         image_feature=self.config.image_feature_name,
                         caption_feature=self.config.caption_feature_name,
                         mask_feature=self.config.mask_feature_name)
-                image = self.process_image(encoded_image, thread_id=thread_id)
+                # image = self.process_image(image, thread_id=thread_id)
                 images_and_captions.append([image, caption,mask])
 
             # Batch inputs.
@@ -107,32 +107,31 @@ class CaptionGenerator(BaseModel):
 
     def build_rpn(self):
 
-        config = self.config
+        # config = self.config
 
-        images = self.images
+        # images = self.images
         
-        if config.pipeline_config_path:
-            model_configs = config_util.get_configs_from_pipeline_file(
-                config.pipeline_config_path)
+        # if config.pipeline_config_path:
+        #     model_configs = config_util.get_configs_from_pipeline_file(
+        #         config.pipeline_config_path)
 
-        model_config = model_configs['model']
+        # model_config = model_configs['model']
 
-        if self.is_train:
-            model_fn = functools.partial(
-                model_builder.build,
-                model_config=model_config,
-                is_training=True)
-        detection_model = model_fn()
-        image_preprocessed = detection_model.preprocess(images) 
-        features = detection_model.predict(image_preprocessed)
-        feature = features['rpn_box_predictor_features']
-        feature_reshaped = tf.reshape(feature,
-                            [config.batch_size, 1444, 512])
-        print(feature)
-        self.num_ctx = 1444
-        self.dim_ctx = 512
-        self.conv_feats = feature_reshaped
-        self.images = images
+        # if self.is_train:
+        #     model_fn = functools.partial(
+        #         model_builder.build,
+        #         model_config=model_config,
+        #         is_training=True)
+        # detection_model = model_fn()
+        # image_preprocessed = detection_model.preprocess(images) 
+        # features = detection_model.predict(image_preprocessed)
+        # feature = features['rpn_box_predictor_features']
+        # feature_reshaped = tf.reshape(feature,
+        #                     [config.batch_size, 1444, 512])
+        # print(feature)
+        self.num_ctx = 100
+        self.dim_ctx = 2048
+        self.conv_feats = self.images
 
     def build_vgg16(self):
         """ Build the VGG16 net. """
