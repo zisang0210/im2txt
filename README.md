@@ -40,19 +40,34 @@ OUTPUT_DIR="/home/zisang/im2txt"
 sh ./dataset/download_mscoco.sh.sh ../data/coco
 ```
 4. get feature for each region proposal(100\*2048)
+- 1. for coco
 ```shell
 DATASET_DIR="/home/zisang/Documents/code/data/mscoco/raw-data"
 OUTPUT_DIR="/home/zisang/im2txt/data/coco"
-python ./dataset/coco/build_mscoco_data.py \
+python ./dataset/build_data.py \
   --graph_path="../data/frozen_inference_graph.pb" \
+  --dataset "coco" \
   --train_image_dir="${DATASET_DIR}/train2014" \
   --val_image_dir="${DATASET_DIR}/val2014" \
   --train_captions_file="${DATASET_DIR}/annotations/captions_train2014.json" \
   --val_captions_file="${DATASET_DIR}/annotations/captions_val2014.json" \
   --output_dir="${OUTPUT_DIR}" \
-  --train_shards=1\
-  --num_threads=2\
   --word_counts_output_file="${OUTPUT_DIR}/word_counts.txt" 
+```
+- 2. for flickr8k
+```shell
+DATASET_DIR="/home/zisang/Documents/code/data/Flicker8k"
+OUTPUT_DIR="/home/zisang/im2txt/data/flickr8k"
+python ./dataset/build_data.py \
+  --graph_path "../data/frozen_inference_graph.pb" \
+  --dataset "flickr8k" \
+  --min_word_count 2 \
+  --image_dir "${DATASET_DIR}/Flicker8k_Dataset/" \
+  --text_path "${DATASET_DIR}/" \
+  --output_dir "${OUTPUT_DIR}" \
+  --train_shards 16\
+  --num_threads 4\
+  --word_counts_output_file "${OUTPUT_DIR}/word_counts.txt" 
 ```
 
 
