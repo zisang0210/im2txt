@@ -13,8 +13,8 @@ This neural system for image captioning is roughly based on the paper "Show, Att
 ### Usage
 
 * **tips:**
-```shell
 1. delete all pycache folders under current directory
+```shell
 find . -name '__pycache__' -type d -exec rm -rf {} \;
 ```
 
