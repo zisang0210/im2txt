@@ -40,7 +40,7 @@ OUTPUT_DIR="/home/zisang/im2txt"
 sh ./dataset/download_mscoco.sh.sh ../data/coco
 ```
 4. get feature for each region proposal(100\*2048)
-- 1. for coco
+  - for coco run the following command
 ```shell
 DATASET_DIR="/home/zisang/Documents/code/data/mscoco/raw-data"
 OUTPUT_DIR="/home/zisang/im2txt/data/coco"
@@ -54,10 +54,10 @@ python ./dataset/build_data.py \
   --output_dir="${OUTPUT_DIR}" \
   --word_counts_output_file="${OUTPUT_DIR}/word_counts.txt" 
 ```
-- 2. for flickr8k
+  - for flickr8k
 ```shell
-DATASET_DIR="/home/zisang/Documents/code/data/Flicker8k"
-OUTPUT_DIR="/home/zisang/im2txt/data/flickr8k"
+DATASET_DIR="/home/zshwu/data/flickr8k"
+OUTPUT_DIR="../data/flickr8k"
 python ./dataset/build_data.py \
   --graph_path "../data/frozen_inference_graph.pb" \
   --dataset "flickr8k" \
