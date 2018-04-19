@@ -56,8 +56,8 @@ class CaptionGenerator(BaseModel):
                                                 self.config.batch_size)
             images, captions, input_mask = (
                     input_ops.batch_with_dynamic_pad(images_and_captions,
-                                                                                     batch_size=self.config.batch_size,
-                                                                                     queue_capacity=queue_capacity))
+                                                     batch_size=self.config.batch_size,
+                                                     queue_capacity=queue_capacity))
 
         else:
             # In inference mode, images and inputs are fed via placeholders.

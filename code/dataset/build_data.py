@@ -478,9 +478,9 @@ def main(unused_argv):
   train_captions = [c for image in train_dataset for c in image.captions]
   vocab = _create_vocab(train_captions)
 
-  _process_dataset("train", train_dataset[:4], vocab, FLAGS.train_shards)
-  # _process_dataset("val", val_dataset, vocab, FLAGS.val_shards)
-  # _process_dataset("test", test_dataset, vocab, FLAGS.test_shards)
+  _process_dataset("train", train_dataset, vocab, FLAGS.train_shards)
+  _process_dataset("val", val_dataset, vocab, FLAGS.val_shards)
+  _process_dataset("test", test_dataset, vocab, FLAGS.test_shards)
 
 
 if __name__ == "__main__":

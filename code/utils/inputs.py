@@ -43,13 +43,14 @@ def parse_sequence_example(serialized, image_feature, caption_feature,mask_featu
           image_feature: tf.FixedLenFeature([], dtype=tf.string)
       },
       sequence_features={
-          caption_feature: tf.FixedLenSequenceFeature([], dtype=tf.int64),
-          mask_feature: tf.FixedLenSequenceFeature([], dtype=tf.float32),
+          caption_feature: tf.FixedLenSequenceFeature([21], dtype=tf.int64),
+          mask_feature: tf.FixedLenSequenceFeature([21], dtype=tf.float32),
       })
 
   encoded_image = context[image_feature]
   img = tf.decode_raw(encoded_image,tf.float32)
   img = tf.reshape(img,[100,2048])
+  img = tf.tile(tf.expand_dims(img, 0), [5,1,1])
   caption = sequence[caption_feature]
   mask = sequence[mask_feature]
   return img, caption, mask
@@ -192,12 +193,13 @@ def batch_with_dynamic_pad(images_and_captions,
   #   indicator = tf.ones(tf.expand_dims(caption_length, 0), dtype=tf.float32)
   #   enqueue_list.append([image, caption, indicator])
 
-  images, captions, mask = tf.train.batch_join(
+  images, captions, mask = tf.train.shuffle_batch_join(
       images_and_captions,
       batch_size=batch_size,
       capacity=queue_capacity,
+      enqueue_many=True,
       shapes=[[100,2048],[21],[21]],
-      dynamic_pad=False,
+      min_after_dequeue=128,
       name="batch_and_pad")
 
   if add_summaries:

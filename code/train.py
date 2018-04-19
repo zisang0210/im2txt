@@ -56,6 +56,8 @@ def main(argv):
         init_fn=None,
         saver=saver)
 
+    # model = CaptionGenerator(config, mode="train")
+    # model.build()
     # with tf.Session() as sess:
     # #     sess.run(tf.global_variables_initializer())
     #     sess.run(tf.local_variables_initializer())
@@ -70,8 +72,10 @@ def main(argv):
 
     #     for i in range(1):
     #         # Retrieve a single instance:
-    #         example = sess.run(model.images)
-    #         print(example,type(example),example.shape)
+    #         img,cap,mask = sess.run([model.image,model.caption, model.mask])
+    #         print(img,type(img),img.shape)
+    #         print(cap,type(cap),cap.shape)
+    #         print(mask,type(mask),mask.shape)
 
     #     coord.request_stop()
     #     coord.join(threads)

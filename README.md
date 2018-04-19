@@ -65,8 +65,8 @@ python ./dataset/build_data.py \
   --image_dir "${DATASET_DIR}/Flicker8k_Dataset/" \
   --text_path "${DATASET_DIR}/" \
   --output_dir "${OUTPUT_DIR}" \
-  --train_shards 16\
-  --num_threads 4\
+  --train_shards 64\
+  --num_threads 8\
   --word_counts_output_file "${OUTPUT_DIR}/word_counts.txt" 
 ```
 
