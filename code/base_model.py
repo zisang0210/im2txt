@@ -14,9 +14,9 @@ from utils.coco.pycocoevalcap.eval import COCOEvalCap
 from utils.misc import ImageLoader, CaptionData, TopN
 
 class BaseModel(object):
-    def __init__(self, config):
+    def __init__(self, config, mode="train"):
         self.config = config
-        self.is_train = True if config.phase == 'train' else False
+        self.is_train = True if mode == 'train' else False
         self.train_cnn = False
         self.image_loader = ImageLoader('./utils/ilsvrc_2012_mean.npy')
         self.image_shape = [224, 224, 3]
@@ -25,7 +25,7 @@ class BaseModel(object):
                                        name = 'global_step',
                                        trainable = False)
         self.reader = tf.TFRecordReader()
-        self.build()
+        # self.build()
 
     def build(self):
         raise NotImplementedError()
@@ -33,19 +33,6 @@ class BaseModel(object):
     def train(self):
         """ Train the model using the COCO train2014 data. """
         print("Training the model...")
-
-        # Set up the Saver for saving and restoring model checkpoints.
-        saver = tf.train.Saver(max_to_keep=self.config.max_checkpoints_to_keep)
-        # Run training.
-        tf.contrib.slim.learning.train(
-            self.opt_op,
-            self.config.save_dir,
-            log_every_n_steps=self.config.log_every_n_steps,
-            graph=tf.get_default_graph(),
-            global_step=self.global_step,
-            number_of_steps=self.config.number_of_steps,
-            init_fn=None,
-            saver=saver)
 
         # config = self.config
 

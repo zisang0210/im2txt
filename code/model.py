@@ -617,6 +617,7 @@ class CaptionGenerator(BaseModel):
 
     def build_summary(self):
         """ Build the summary (for TensorBoard visualization). """
+        print("build summary")
         with tf.name_scope("variables"):
             for var in tf.trainable_variables():
                 with tf.name_scope(var.name[:var.name.find(":")]):

@@ -56,8 +56,8 @@ python ./dataset/build_data.py \
 ```
   - for flickr8k
 ```shell
-DATASET_DIR="/home/zshwu/data/flickr8k"
-OUTPUT_DIR="../data/flickr8k"
+DATASET_DIR="/home/zisang/Documents/code/data/Flicker8k"
+OUTPUT_DIR="/home/zisang/im2txt/data/flickr8k"
 python ./dataset/build_data.py \
   --graph_path "../data/frozen_inference_graph.pb" \
   --dataset "flickr8k" \
@@ -72,25 +72,14 @@ python ./dataset/build_data.py \
 
 
 * **Training:**
-To train a model using the flickr30k data, first make sure you are under the folder `code`, then setup various parameters in the file `config.py` and then run a command like this:
+First make sure you are under the folder `code`, then setup various parameters in the file `config.py` and then run a command like this:
 ```shell
-python main.py --phase=train \
-    --load_cnn \
-    --cnn_model_file='../data/vgg16_no_fc.npy'\
-    --dataset='flickr30'
-    [--train_cnn]    
-```
-Turn on `--train_cnn` if you want to jointly train the CNN and RNN parts. Otherwise, only the RNN part is trained. The checkpoints will be saved in the folder `models`. If you want to resume the training from a checkpoint, run a command like this:
-```shell
-python main.py --phase=train \
-    --load \
-    --model_file='../output/models/xxxxxx.npy'\
-    --dataset='flickr30'
-    [--train_cnn]
+python train.py --number_of_steps=10000 \
+    --data_file='../data/coco/train-?????-of-00256'
 ```
 To monitor the progress of training, run the following command:
 ```shell
-tensorboard --logdir='../output/summary/'
+tensorboard --logdir='../output/'
 ```
 
 * **Evaluation:**

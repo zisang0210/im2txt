@@ -5,7 +5,7 @@ class Config(object):
         """Sets the default model hyperparameters."""
         # File pattern of sharded TFRecord file containing SequenceExample protos.
         # Must be provided in training and evaluation modes.
-        self.input_file_pattern = "/home/zisang/im2txt/data/coco/train-?????-of-00256"
+        self.input_file_pattern = None
 
         # Image format ("jpeg" or "png").
         self.image_format = "jpeg"
@@ -57,8 +57,8 @@ class Config(object):
 
         # about the optimization
         self.max_checkpoints_to_keep = 5
-        self.log_every_n_steps = 1
-        self.number_of_steps= 10
+        self.log_every_n_steps = 10
+
         self.num_epochs = 100
         self.batch_size = 32
         self.optimizer = 'Adam'    # 'Adam', 'RMSProp', 'Momentum' or 'SGD'
@@ -76,8 +76,7 @@ class Config(object):
 
         # about the saver
         self.save_period = 1000
-        self.save_dir = '../output/models/'
-        self.summary_dir = '../output/summary/'
+        self.save_dir = '../output/'
 
         # about the vocabulary
         self.vocabulary_file = './vocabulary.csv'

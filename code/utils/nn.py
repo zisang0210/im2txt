@@ -2,9 +2,9 @@ import tensorflow as tf
 import tensorflow.contrib.layers as layers
 
 class NN(object):
-    def __init__(self, config):
+    def __init__(self, config, mode="train"):
         self.config = config
-        self.is_train = True if config.phase == 'train' else False
+        self.is_train = True if mode == 'train' else False
         self.train_cnn = False
         self.prepare()
 
