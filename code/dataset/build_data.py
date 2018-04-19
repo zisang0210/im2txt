@@ -215,6 +215,19 @@ def _bytes_feature(value):
   return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
+def _int64_list_feature(value):
+  """Wrapper for inserting an int64 Feature into a SequenceExample proto."""
+  return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
+
+def _float_list_feature(value):
+  return tf.train.Feature(float_list=tf.train.FloatList(value=value))
+
+def _bytes_list_feature(value):
+  """Wrapper for inserting a bytes Feature into a SequenceExample proto."""
+  return tf.train.Feature(bytes_list=tf.train.BytesList(value=[
+                        bytes(v, encoding = "utf8") for v in value]))
+
+
 def _int64_feature_list(values):
   """Wrapper for inserting an int64 FeatureList into a SequenceExample proto."""
   return tf.train.FeatureList(feature=[_int64_feature(v) for v in values])
@@ -226,6 +239,19 @@ def _float_feature_list(values):
 def _bytes_feature_list(values):
   """Wrapper for inserting a bytes FeatureList into a SequenceExample proto."""
   return tf.train.FeatureList(feature=[_bytes_feature(bytes(v, encoding = "utf8")) for v in values])
+
+
+def _int64_list_feature_list(values):
+  """Wrapper for inserting an int64 FeatureList into a SequenceExample proto."""
+  return tf.train.FeatureList(feature=[_int64_list_feature(v) for v in values])
+
+def _float_list_feature_list(values):
+  """Wrapper for inserting an float FeatureList into a SequenceExample proto."""
+  return tf.train.FeatureList(feature=[_float_list_feature(v) for v in values])
+
+def _bytes_list_feature_list(values):
+  """Wrapper for inserting a bytes FeatureList into a SequenceExample proto."""
+  return tf.train.FeatureList(feature=[_bytes_list_feature(v) for v in values])
 
 
 def _to_sequence_example(image, decoder, vocab):
@@ -248,6 +274,8 @@ def _to_sequence_example(image, decoder, vocab):
   # except (tf.errors.InvalidArgumentError, AssertionError):
   #   print("Skipping file with invalid JPEG data: %s" % image.filename)
   #   return
+  
+  assert len(image.captions) == 5
 
   bounding_box,feature_map = decoder.extract_faster_rcnn_feature(image.filename)
   context = tf.train.Features(feature={
@@ -255,23 +283,28 @@ def _to_sequence_example(image, decoder, vocab):
       "image/data": _bytes_feature(feature_map.tostring()),
   })
 
-  assert len(image.captions) == 1
-  caption = image.captions[0]
-  caption_ids = [vocab.word_to_id(word) for word in caption]
-  caption_num_words = len(caption_ids)
-  if caption_num_words > 21:
-    caption_ids = caption_ids[:21]
-    caption_num_words = 21
+  img_captions_ids = []
+  img_captions_mask = []
+  for i in range(len(image.captions)):
+    caption = image.captions[i]
+    caption_ids = [vocab.word_to_id(word) for word in caption]
+    caption_num_words = len(caption_ids)
+    if caption_num_words > 21:
+      caption_ids = caption_ids[:21]
+      caption_num_words = 21
 
-  caption_fix_len = np.zeros(21,dtype = np.int32)
-  current_masks = np.zeros(21,dtype=np.float32)
-  caption_fix_len[:caption_num_words] = np.array(caption_ids)
-  current_masks[:caption_num_words] = 1.0
+    caption_fix_len = np.zeros(21,dtype = np.int32)
+    current_masks = np.zeros(21,dtype=np.float32)
+    caption_fix_len[:caption_num_words] = np.array(caption_ids)
+    current_masks[:caption_num_words] = 1.0
+
+    img_captions_ids.append(caption_fix_len)
+    img_captions_mask.append(current_masks)
 
   feature_lists = tf.train.FeatureLists(feature_list={
-      "image/caption": _bytes_feature_list(caption),
-      "image/caption_ids": _int64_feature_list(caption_fix_len),
-      "image/caption_mask": _float_feature_list(current_masks)
+      "image/caption": _bytes_list_feature_list(image.captions),
+      "image/caption_ids": _int64_list_feature_list(img_captions_ids),
+      "image/caption_mask": _float_list_feature_list(img_captions_mask)
   })
   sequence_example = tf.train.SequenceExample(
       context=context, feature_lists=feature_lists)
@@ -347,13 +380,13 @@ def _process_dataset(name, images, vocab, num_shards):
     vocab: A Vocabulary object.
     num_shards: Integer number of shards for the output files.
   """
-  # Break up each image into a separate entity for each caption.
-  images = [ImageMetadata(image.image_id, image.filename, [caption])
-            for image in images for caption in image.captions]
+  # # Break up each image into a separate entity for each caption.
+  # images = [ImageMetadata(image.image_id, image.filename, [caption])
+  #           for image in images for caption in image.captions]
 
-  # Shuffle the ordering of images. Make the randomization repeatable.
-  random.seed(12345)
-  random.shuffle(images)
+  # # Shuffle the ordering of images. Make the randomization repeatable.
+  # random.seed(12345)
+  # random.shuffle(images)
 
   # Break the images into num_threads batches. Batch i is defined as
   # images[ranges[i][0]:ranges[i][1]].
@@ -445,9 +478,9 @@ def main(unused_argv):
   train_captions = [c for image in train_dataset for c in image.captions]
   vocab = _create_vocab(train_captions)
 
-  _process_dataset("train", train_dataset, vocab, FLAGS.train_shards)
-  _process_dataset("val", val_dataset, vocab, FLAGS.val_shards)
-  _process_dataset("test", test_dataset, vocab, FLAGS.test_shards)
+  _process_dataset("train", train_dataset[:4], vocab, FLAGS.train_shards)
+  # _process_dataset("val", val_dataset, vocab, FLAGS.val_shards)
+  # _process_dataset("test", test_dataset, vocab, FLAGS.test_shards)
 
 
 if __name__ == "__main__":
