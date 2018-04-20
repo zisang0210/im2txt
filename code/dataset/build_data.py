@@ -105,28 +105,28 @@ from common import Vocabulary, ImageMetadata
 tf.flags.DEFINE_string("graph_path", "/home/hillyess/ai/project-image-caption/faster_rcnn_resnet50_coco/exported_graphs/frozen_inference_graph.pb",
                        "Faster rcnn forzen graph.")
 
-tf.flags.DEFINE_string('dataset',"flickr8k",
+tf.flags.DEFINE_string('dataset', "coco",
                        "Must be flickr8k, flickr30k, or coco")
 # coco path
-tf.flags.DEFINE_string("train_image_dir", "/tmp/train2014/",
+tf.flags.DEFINE_string("train_image_dir", "/home/hillyess/coco_tfrecord/train2014",
                        "Training image directory.")
-tf.flags.DEFINE_string("val_image_dir", "/tmp/val2014",
+tf.flags.DEFINE_string("val_image_dir", "/home/hillyess/coco_tfrecord/val2014",
                        "Validation image directory.")
-tf.flags.DEFINE_string("train_captions_file", "/tmp/captions_train2014.json",
+tf.flags.DEFINE_string("train_captions_file", "/home/hillyess/ai/coco/annotations/captions_train2014.json",
                        "Training captions JSON file.")
-tf.flags.DEFINE_string("val_captions_file", "/tmp/captions_val2014.json",
+tf.flags.DEFINE_string("val_captions_file", "/home/hillyess/ai/coco/annotations/captions_val2014.json",
                        "Validation captions JSON file.")
 # flickr8k path
-tf.flags.DEFINE_string("image_dir", "/home/hillyess/ai/project-image-caption/Flickr8k/Flicker8k_Dataset/",
+tf.flags.DEFINE_string("image_dir", "/home/hillyess/ai/project-image-caption/Flickr8k/Flicker8k_Dataset",
                        "Directory containing the image files.")
 tf.flags.DEFINE_string("text_path", "/home/hillyess/ai/project-image-caption/Flickr8k/Flickr8k_text",
                        "containing txt files about image caption annotations.")
 
-tf.flags.DEFINE_string("output_dir", "/home/hillyess/flick8k_tfrecord", "Output data directory.")
+tf.flags.DEFINE_string("output_dir", "/home/hillyess/coco_tfrecord", "Output data directory.")
 
-tf.flags.DEFINE_integer("train_shards", 16,
+tf.flags.DEFINE_integer("train_shards", 256,
                         "Number of shards in training TFRecord files.")
-tf.flags.DEFINE_integer("val_shards", 4,
+tf.flags.DEFINE_integer("val_shards", 16,
                         "Number of shards in validation TFRecord files.")
 tf.flags.DEFINE_integer("test_shards", 8,
                         "Number of shards in testing TFRecord files.")
@@ -140,7 +140,7 @@ tf.flags.DEFINE_string("unknown_word", "<UNK>",
 tf.flags.DEFINE_integer("min_word_count", 4,
                         "The minimum number of occurrences of each word in the "
                         "training set for inclusion in the vocabulary.")
-tf.flags.DEFINE_string("word_counts_output_file", "/tmp/word_counts.txt",
+tf.flags.DEFINE_string("word_counts_output_file", "/home/hillyess/coco_tfrecord/word_counts.txt",
                        "Output vocabulary file of word counts.")
 
 tf.flags.DEFINE_integer("num_threads", 8,
