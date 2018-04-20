@@ -57,7 +57,8 @@ def main(argv):
         global_step=model.global_step,
         number_of_steps=FLAGS.number_of_steps,
         summary_op=model.summary,
-        save_summaries_secs=600,
+        save_summaries_secs=60,
+        save_interval_secs=600,
         init_fn=None,
         saver=saver)
 
