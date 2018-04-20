@@ -11,7 +11,7 @@ import json
 from utils.nn import NN
 # from utils.coco.coco import COCO
 # from utils.coco.pycocoevalcap.eval import COCOEvalCap
-from utils.misc import ImageLoader, CaptionData, TopN
+from utils.misc import CaptionData, TopN
 
 class BaseModel(object):
     def __init__(self, config, mode="train"):
