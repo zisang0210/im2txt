@@ -32,19 +32,19 @@ class Config(object):
 
         # about the model architecture
         self.cnn = 'rpn'               # 'rpn', 'vgg16' or 'resnet50'
-        #model config
-        self.pipeline_config_path='./faster_rcnn_resnet50_coco.config'
 
         self.max_caption_length = 20
         self.dim_embedding = 512
         self.num_lstm_units = 512
         self.num_initalize_layers = 2    # 1 or 2
         self.dim_initalize_layer = 512
-        self.num_attend_layers = 2       # 1 or 2
-        self.dim_attend_layer = 512
         self.num_decode_layers = 2       # 1 or 2
         self.dim_decode_layer = 1024
-
+        
+        # attention mechanism
+        self.attention_mechanism = "fc2"       # "fc1", "fc2", "rnn" or "bias"
+        self.dim_attend_layer = 512     # for "fc1" and "fc2" only
+        
         # about the weight initialization and regularization
         self.fc_kernel_initializer_scale = 0.08
         self.fc_kernel_regularizer_scale = 1e-4
