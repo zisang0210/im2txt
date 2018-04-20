@@ -23,13 +23,6 @@ class Config(object):
         # Number of threads for image preprocessing. Should be a multiple of 2.
         self.num_preprocess_threads = 2
 
-        # Name of the SequenceExample context feature containing image data.
-        self.image_feature_name = "image/data"
-        # Name of the SequenceExample feature list containing integer captions.
-        self.caption_feature_name = "image/caption_ids"
-        # Name of the SequenceExample feature list containing float caption masks.
-        self.mask_feature_name = "image/caption_mask"
-
         # about the model architecture
         self.cnn = 'rpn'               # 'rpn', 'vgg16' or 'resnet50'
 

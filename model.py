@@ -53,24 +53,41 @@ class CaptionGenerator(BaseModel):
             # Image processing and random distortion. Split across multiple threads
             # with each thread applying a slightly different distortion.
             assert self.config.num_preprocess_threads % 2 == 0
-            images_and_captions = []
-            for thread_id in range(self.config.num_preprocess_threads):
-                serialized_sequence_example = input_queue.dequeue()
-                image, caption, mask = input_ops.parse_sequence_example(
-                        serialized_sequence_example,
-                        image_feature=self.config.image_feature_name,
-                        caption_feature=self.config.caption_feature_name,
-                        mask_feature=self.config.mask_feature_name)
-                # image = self.process_image(image, thread_id=thread_id)
-                images_and_captions.append([image, caption,mask])
 
-            # Batch inputs.
-            queue_capacity = (4 * self.config.num_preprocess_threads *
-                                                self.config.batch_size)
-            images, captions, input_mask = (
-                    input_ops.batch_with_dynamic_pad(images_and_captions,
-                                                     batch_size=self.config.batch_size,
-                                                     queue_capacity=queue_capacity))
+            if self.mode == "train":
+                images_and_captions = []
+                for thread_id in range(self.config.num_preprocess_threads):
+                    serialized_sequence_example = input_queue.dequeue()
+                    image, caption, mask = input_ops.parse_train_example(
+                            serialized_sequence_example)
+                    # image = self.process_image(image, thread_id=thread_id)
+                    images_and_captions.append([image, caption,mask])
+
+                # Batch inputs.
+                queue_capacity = (4 * self.config.num_preprocess_threads *
+                                                    self.config.batch_size)
+                images, captions, input_mask = (
+                        input_ops.batch_with_dynamic_pad(images_and_captions,
+                                                         batch_size=self.config.batch_size,
+                                                         queue_capacity=queue_capacity))
+            else:
+                images_and_captions = []
+                for thread_id in range(self.config.num_preprocess_threads):
+                    serialized_sequence_example = input_queue.dequeue()
+                    image, caption, mask = input_ops.parse_eval_example(
+                            serialized_sequence_example)
+                    # image = self.process_image(image, thread_id=thread_id)
+                    images_and_captions.append([image, caption,mask])
+
+                # Batch inputs.
+                queue_capacity = (2 * self.config.num_preprocess_threads *
+                                                    self.config.batch_size)
+                images, captions, input_mask = tf.train.batch_join(
+                                                          images_and_captions,
+                                                          batch_size=self.config.batch_size,
+                                                          capacity=queue_capacity,
+                                                          shapes=[[100,2048],[21],[21]],
+                                                          name="batch_generation")
 
         
         self.images = images

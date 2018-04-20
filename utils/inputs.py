@@ -23,7 +23,7 @@ from __future__ import print_function
 import tensorflow as tf
 
 
-def parse_sequence_example(serialized, image_feature, caption_feature,mask_feature):
+def parse_train_example(serialized):
   """Parses a tensorflow.SequenceExample into an image and caption.
 
   Args:
@@ -40,21 +40,56 @@ def parse_sequence_example(serialized, image_feature, caption_feature,mask_featu
   context, sequence = tf.parse_single_sequence_example(
       serialized,
       context_features={
-          image_feature: tf.FixedLenFeature([], dtype=tf.string)
+          "image/data": tf.FixedLenFeature([], dtype=tf.string)
       },
       sequence_features={
-          caption_feature: tf.FixedLenSequenceFeature([21], dtype=tf.int64),
-          mask_feature: tf.FixedLenSequenceFeature([21], dtype=tf.float32),
+          "image/caption_ids": tf.FixedLenSequenceFeature([21], dtype=tf.int64),
+          "image/caption_mask": tf.FixedLenSequenceFeature([21], dtype=tf.float32),
       })
 
-  encoded_image = context[image_feature]
+  encoded_image = context["image/data"]
   img = tf.decode_raw(encoded_image,tf.float32)
   img = tf.reshape(img,[100,2048])
   img = tf.tile(tf.expand_dims(img, 0), [5,1,1])
-  caption = sequence[caption_feature]
-  mask = sequence[mask_feature]
+  caption = sequence["image/caption_ids"]
+  mask = sequence["image/caption_mask"]
   return img, caption, mask
 
+def parse_eval_example(serialized):
+  """Parses a tensorflow.SequenceExample into an image and caption.
+
+  Args:
+    serialized: A scalar string Tensor; a single serialized SequenceExample.
+    image_feature: Name of SequenceExample context feature containing image
+      data.
+    caption_feature: Name of SequenceExample feature list containing integer
+      captions.
+
+  Returns:
+    encoded_image: A scalar string Tensor containing a JPEG encoded image.
+    caption: A 1-D uint64 Tensor with dynamically specified length.
+  """
+  context, sequence = tf.parse_single_sequence_example(
+      serialized,
+      context_features={
+          "image/image_id": tf.FixedLenFeature([],dtype=tf.int64),
+          "image/filename": FixedLenFeature([], dtype=tf.string),
+          "image/data": tf.FixedLenFeature([], dtype=tf.string),
+          "iamge/bounding_box":tf.FixedLenFeature([], dtype=tf.string),
+      },
+      sequence_features={
+          "image/caption_ids": tf.FixedLenSequenceFeature([21], dtype=tf.int64),
+          "image/caption_mask": tf.FixedLenSequenceFeature([21], dtype=tf.float32),
+      })
+  encoded_image = context["image/data"]
+  img = tf.decode_raw(encoded_image,tf.float32)
+  img = tf.reshape(img,[100,2048])
+  caption = sequence["image/caption_ids"]
+  mask = sequence["image/caption_mask"]
+  cap_num = tf.shape(mask)[caption]
+  img = tf.tile(tf.expand_dims(img, 0), [cap_num,1,1])
+
+  return img, caption, mask
 
 def prefetch_input_data(reader,
                         file_pattern,
