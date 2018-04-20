@@ -99,10 +99,13 @@ from flickr8k import load_flickr8k_dataset
 from coco import load_coco_dataset
 from common import Vocabulary, ImageMetadata
 
-tf.flags.DEFINE_string("graph_path", "../data/frozen_inference_graph.pb",
+
+
+
+tf.flags.DEFINE_string("graph_path", "/home/hillyess/ai/project-image-caption/faster_rcnn_resnet50_coco/exported_graphs/frozen_inference_graph.pb",
                        "Faster rcnn forzen graph.")
 
-tf.flags.DEFINE_string('dataset',"Flicker8k",
+tf.flags.DEFINE_string('dataset',"flickr8k",
                        "Must be flickr8k, flickr30k, or coco")
 # coco path
 tf.flags.DEFINE_string("train_image_dir", "/tmp/train2014/",
@@ -114,14 +117,14 @@ tf.flags.DEFINE_string("train_captions_file", "/tmp/captions_train2014.json",
 tf.flags.DEFINE_string("val_captions_file", "/tmp/captions_val2014.json",
                        "Validation captions JSON file.")
 # flickr8k path
-tf.flags.DEFINE_string("image_dir", "/tmp/Flicker8k/Flicker8k_Dataset/",
+tf.flags.DEFINE_string("image_dir", "/home/hillyess/ai/project-image-caption/Flickr8k/Flicker8k_Dataset/",
                        "Directory containing the image files.")
-tf.flags.DEFINE_string("text_path", "/tmp/Flicker8k/",
+tf.flags.DEFINE_string("text_path", "/home/hillyess/ai/project-image-caption/Flickr8k/Flickr8k_text",
                        "containing txt files about image caption annotations.")
 
-tf.flags.DEFINE_string("output_dir", "/tmp/", "Output data directory.")
+tf.flags.DEFINE_string("output_dir", "/home/hillyess/flick8k_tfrecord", "Output data directory.")
 
-tf.flags.DEFINE_integer("train_shards", 256,
+tf.flags.DEFINE_integer("train_shards", 16,
                         "Number of shards in training TFRecord files.")
 tf.flags.DEFINE_integer("val_shards", 4,
                         "Number of shards in validation TFRecord files.")
@@ -170,16 +173,21 @@ class ImageDecoder(object):
         od_graph_def.ParseFromString(serialized_graph)
         tf.import_graph_def(od_graph_def, name='')
 
+
+    sess_config = tf.ConfigProto()
+    sess_config.gpu_options.allow_growth = True
     with detection_graph.as_default():
       # Create a single TensorFlow Session for all image decoding calls.
-      with tf.Session(graph=detection_graph) as self._sess:
+      with tf.Session(config=sess_config, graph=detection_graph) as self._sess:
 
         self._image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
         self._proposal_boxes = detection_graph.get_tensor_by_name('proposal_boxes:0')
+
         # self._detection_scores = detection_graph.get_tensor_by_name('detection_scores:0')
         # self._detection_classes = detection_graph.get_tensor_by_name('detection_classes:0')
         # self._num_detections = detection_graph.get_tensor_by_name('num_detections:0')
         self._feature = detection_graph.get_tensor_by_name('SecondStageBoxPredictor/AvgPool:0')
+
 
   def decode_jpeg(self, encoded_jpeg):
     image = self._sess.run(self._decode_jpeg,
@@ -189,7 +197,11 @@ class ImageDecoder(object):
     return image
   
   def extract_faster_rcnn_feature(self, filename):
-    image = Image.open(filename)
+    try:
+      image = Image.open(filename)
+    except:
+      return None
+
     image_np = self.load_image_into_numpy_array(image)
     image_np_expanded = np.expand_dims(image_np, axis=0)
     (boxes,feat) = self._sess.run(
@@ -276,11 +288,14 @@ def _to_sequence_example(image, decoder, vocab):
   #   return
   
   assert len(image.captions) == 5
-
-  bounding_box,feature_map = decoder.extract_faster_rcnn_feature(image.filename)
+  try:
+    bounding_box, feature_map = decoder.extract_faster_rcnn_feature(image.filename)
+  except:
+    return None
   context = tf.train.Features(feature={
       "image/image_id": _int64_feature(image.image_id),
       "image/data": _bytes_feature(feature_map.tostring()),
+      "iamge/bounding_box": _bytes_feature(bounding_box.tostring())
   })
 
   img_captions_ids = []
