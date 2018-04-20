@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pickle as pickle
 import copy
 import json
-from tqdm import tqdm
+# from tqdm import tqdm
 
 from utils.nn import NN
 from utils.coco.coco import COCO
@@ -63,95 +63,95 @@ class BaseModel(object):
     #     train_writer.close()
     #     print("Training complete.")
 
-    def eval(self, sess, eval_gt_coco, eval_data, vocabulary):
-        """ Evaluate the model using the COCO val2014 data. """
-        print("Evaluating the model ...")
-        config = self.config
+    # def eval(self, sess, eval_gt_coco, eval_data, vocabulary):
+    #     """ Evaluate the model using the COCO val2014 data. """
+    #     print("Evaluating the model ...")
+    #     config = self.config
 
-        results = []
-        if not os.path.exists(config.eval_result_dir):
-            os.mkdir(config.eval_result_dir)
+    #     results = []
+    #     if not os.path.exists(config.eval_result_dir):
+    #         os.mkdir(config.eval_result_dir)
 
-        # Generate the captions for the images
-        idx = 0
-        for k in tqdm(list(range(eval_data.num_batches)), desc='batch'):
-            batch = eval_data.next_batch()
-            caption_data = self.beam_search(sess, batch, vocabulary)
+    #     # Generate the captions for the images
+    #     idx = 0
+    #     for k in tqdm(list(range(eval_data.num_batches)), desc='batch'):
+    #         batch = eval_data.next_batch()
+    #         caption_data = self.beam_search(sess, batch, vocabulary)
 
-            fake_cnt = 0 if k<eval_data.num_batches-1 \
-                         else eval_data.fake_count
-            for l in range(eval_data.batch_size-fake_cnt):
-                word_idxs = caption_data[l][0].sentence
-                score = caption_data[l][0].score
-                caption = vocabulary.get_sentence(word_idxs)
-                results.append({'image_id': eval_data.image_ids[idx].item(),
-                                'caption': caption})
-                idx += 1
+    #         fake_cnt = 0 if k<eval_data.num_batches-1 \
+    #                      else eval_data.fake_count
+    #         for l in range(eval_data.batch_size-fake_cnt):
+    #             word_idxs = caption_data[l][0].sentence
+    #             score = caption_data[l][0].score
+    #             caption = vocabulary.get_sentence(word_idxs)
+    #             results.append({'image_id': eval_data.image_ids[idx].item(),
+    #                             'caption': caption})
+    #             idx += 1
 
-                # Save the result in an image file, if requested
-                if config.save_eval_result_as_image:
-                    image_file = batch[l]
-                    image_name = image_file.split(os.sep)[-1]
-                    image_name = os.path.splitext(image_name)[0]
-                    img = plt.imread(image_file)
-                    plt.imshow(img)
-                    plt.axis('off')
-                    plt.title(caption)
-                    plt.savefig(os.path.join(config.eval_result_dir,
-                                             image_name+'_result.jpg'))
+    #             # Save the result in an image file, if requested
+    #             if config.save_eval_result_as_image:
+    #                 image_file = batch[l]
+    #                 image_name = image_file.split(os.sep)[-1]
+    #                 image_name = os.path.splitext(image_name)[0]
+    #                 img = plt.imread(image_file)
+    #                 plt.imshow(img)
+    #                 plt.axis('off')
+    #                 plt.title(caption)
+    #                 plt.savefig(os.path.join(config.eval_result_dir,
+    #                                          image_name+'_result.jpg'))
 
-        fp = open(config.eval_result_file, 'w')
-        json.dump(results, fp)
-        fp.close()
+    #     fp = open(config.eval_result_file, 'w')
+    #     json.dump(results, fp)
+    #     fp.close()
 
-        # Evaluate these captions
-        eval_result_coco = eval_gt_coco.loadRes(config.eval_result_file)
-        scorer = COCOEvalCap(eval_gt_coco, eval_result_coco)
-        scorer.evaluate()
-        print("Evaluation complete.")
+    #     # Evaluate these captions
+    #     eval_result_coco = eval_gt_coco.loadRes(config.eval_result_file)
+    #     scorer = COCOEvalCap(eval_gt_coco, eval_result_coco)
+    #     scorer.evaluate()
+    #     print("Evaluation complete.")
 
-    def test(self, sess, test_data, vocabulary):
-        """ Test the model using any given images. """
-        print("Testing the model ...")
-        config = self.config
+    # def test(self, sess, test_data, vocabulary):
+    #     """ Test the model using any given images. """
+    #     print("Testing the model ...")
+    #     config = self.config
 
-        if not os.path.exists(config.test_result_dir):
-            os.mkdir(config.test_result_dir)
+    #     if not os.path.exists(config.test_result_dir):
+    #         os.mkdir(config.test_result_dir)
 
-        captions = []
-        scores = []
+    #     captions = []
+    #     scores = []
 
-        # Generate the captions for the images
-        for k in tqdm(list(range(test_data.num_batches)), desc='path'):
-            batch = test_data.next_batch()
-            caption_data = self.beam_search(sess, batch, vocabulary)
+    #     # Generate the captions for the images
+    #     for k in tqdm(list(range(test_data.num_batches)), desc='path'):
+    #         batch = test_data.next_batch()
+    #         caption_data = self.beam_search(sess, batch, vocabulary)
 
-            fake_cnt = 0 if k<test_data.num_batches-1 \
-                         else test_data.fake_count
-            for l in range(test_data.batch_size-fake_cnt):
-                word_idxs = caption_data[l][0].sentence
-                score = caption_data[l][0].score
-                caption = vocabulary.get_sentence(word_idxs)
-                captions.append(caption)
-                scores.append(score)
+    #         fake_cnt = 0 if k<test_data.num_batches-1 \
+    #                      else test_data.fake_count
+    #         for l in range(test_data.batch_size-fake_cnt):
+    #             word_idxs = caption_data[l][0].sentence
+    #             score = caption_data[l][0].score
+    #             caption = vocabulary.get_sentence(word_idxs)
+    #             captions.append(caption)
+    #             scores.append(score)
 
-                # Save the result in an image file
-                image_file = batch[l]
-                image_name = image_file.split(os.sep)[-1]
-                image_name = os.path.splitext(image_name)[0]
-                img = plt.imread(image_file)
-                plt.imshow(img)
-                plt.axis('off')
-                plt.title(caption)
-                plt.savefig(os.path.join(config.test_result_dir,
-                                         image_name+'_result.jpg'))
+    #             # Save the result in an image file
+    #             image_file = batch[l]
+    #             image_name = image_file.split(os.sep)[-1]
+    #             image_name = os.path.splitext(image_name)[0]
+    #             img = plt.imread(image_file)
+    #             plt.imshow(img)
+    #             plt.axis('off')
+    #             plt.title(caption)
+    #             plt.savefig(os.path.join(config.test_result_dir,
+    #                                      image_name+'_result.jpg'))
 
-        # Save the captions to a file
-        results = pd.DataFrame({'image_files':test_data.image_files,
-                                'caption':captions,
-                                'prob':scores})
-        results.to_csv(config.test_result_file)
-        print("Testing complete.")
+    #     # Save the captions to a file
+    #     results = pd.DataFrame({'image_files':test_data.image_files,
+    #                             'caption':captions,
+    #                             'prob':scores})
+    #     results.to_csv(config.test_result_file)
+    #     print("Testing complete.")
 
     def beam_search(self, sess, vocabulary):
         """Use beam search to generate the captions for a batch of images."""
@@ -245,41 +245,41 @@ class BaseModel(object):
         info_file.close()
         print("Model saved.")
 
-    def load(self, sess, model_file=None):
-        """ Load the model. """
-        config = self.config
-        if model_file is not None:
-            save_path = model_file
-        else:
-            info_path = os.path.join(config.save_dir, "config.pickle")
-            info_file = open(info_path, "rb")
-            config = pickle.load(info_file)
-            global_step = config.global_step
-            info_file.close()
-            save_path = os.path.join(config.save_dir,
-                                     str(global_step)+".npy")
+    # def load(self, sess, model_file=None):
+    #     """ Load the model. """
+    #     config = self.config
+    #     if model_file is not None:
+    #         save_path = model_file
+    #     else:
+    #         info_path = os.path.join(config.save_dir, "config.pickle")
+    #         info_file = open(info_path, "rb")
+    #         config = pickle.load(info_file)
+    #         global_step = config.global_step
+    #         info_file.close()
+    #         save_path = os.path.join(config.save_dir,
+    #                                  str(global_step)+".npy")
 
-        print("Loading the model from %s..." %save_path)
-        data_dict = np.load(save_path).item()
-        count = 0
-        for v in tqdm(tf.global_variables()):
-            if v.name in data_dict.keys():
-                sess.run(v.assign(data_dict[v.name]))
-                count += 1
-        print("%d tensors loaded." %count)
+    #     print("Loading the model from %s..." %save_path)
+    #     data_dict = np.load(save_path).item()
+    #     count = 0
+    #     for v in tqdm(tf.global_variables()):
+    #         if v.name in data_dict.keys():
+    #             sess.run(v.assign(data_dict[v.name]))
+    #             count += 1
+    #     print("%d tensors loaded." %count)
 
-    def load_cnn(self, session, data_path, ignore_missing=True):
-        """ Load a pretrained CNN model. """
-        print("Loading the CNN from %s..." %data_path)
-        data_dict = np.load(data_path,encoding="latin1").item()
-        count = 0
-        for op_name in tqdm(data_dict):
-            with tf.variable_scope(op_name, reuse = True):
-                for param_name, data in data_dict[op_name].items():
-                    try:
-                        var = tf.get_variable(param_name)
-                        session.run(var.assign(data))
-                        count += 1
-                    except ValueError:
-                        pass
-        print("%d tensors loaded." %count)
+    # def load_cnn(self, session, data_path, ignore_missing=True):
+    #     """ Load a pretrained CNN model. """
+    #     print("Loading the CNN from %s..." %data_path)
+    #     data_dict = np.load(data_path,encoding="latin1").item()
+    #     count = 0
+    #     for op_name in tqdm(data_dict):
+    #         with tf.variable_scope(op_name, reuse = True):
+    #             for param_name, data in data_dict[op_name].items():
+    #                 try:
+    #                     var = tf.get_variable(param_name)
+    #                     session.run(var.assign(data))
+    #                     count += 1
+    #                 except ValueError:
+    #                     pass
+    #     print("%d tensors loaded." %count)
