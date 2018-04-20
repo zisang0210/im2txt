@@ -9,8 +9,8 @@ import json
 # from tqdm import tqdm
 
 from utils.nn import NN
-from utils.coco.coco import COCO
-from utils.coco.pycocoevalcap.eval import COCOEvalCap
+# from utils.coco.coco import COCO
+# from utils.coco.pycocoevalcap.eval import COCOEvalCap
 from utils.misc import ImageLoader, CaptionData, TopN
 
 class BaseModel(object):
