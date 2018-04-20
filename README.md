@@ -65,29 +65,30 @@ python ./dataset/build_data.py \
   --image_dir "${DATASET_DIR}/Flicker8k_Dataset/" \
   --text_path "${DATASET_DIR}/" \
   --output_dir "${OUTPUT_DIR}" \
-  --train_shards 64\
-  --num_threads 8\
-  --word_counts_output_file "${OUTPUT_DIR}/word_counts.txt" 
+  --train_shards 32\
+  --num_threads 8
 ```
 
 
 * **Training:**
 First make sure you are under the folder `code`, then setup various parameters in the file `config.py` and then run a command like this:
 ```shell
-python train.py --number_of_steps=10000 \
-    --data_file='../data/coco/train-?????-of-00256'
+python train.py --input_file_pattern='../data/flickr8k/train-?????-of-00064' \
+    -- number_of_steps=10000\
 ```
 To monitor the progress of training, run the following command:
 ```shell
-tensorboard --logdir='../output/'
+tensorboard --logdir='../output/model'
 ```
 
 * **Evaluation:**
 To evaluate a trained model using the flickr30 data, run a command like this:
 ```shell
-python main.py --phase=eval \
-    --model_file='./models/xxxxxx.npy' \
-    --dataset='flickr30'
+python eval.py --input_file_pattern='../data/flickr8k/train-?????-of-00064' \
+    --checkpoint_dir='../output/' \
+    --eval_dir='../output/eval' \
+    --min_global_step=10 \
+    --num_eval_examples=32 \
     --beam_size=3
 ```
 The result will be shown in stdout. Furthermore, the generated captions will be saved in the file `output/val/flickr30_results.json`.

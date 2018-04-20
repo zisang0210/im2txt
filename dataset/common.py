@@ -2,7 +2,7 @@ from collections import namedtuple
 import nltk.tokenize
 
 ImageMetadata = namedtuple("ImageMetadata",
-                           ["image_id", "filename", "captions"])
+                           ["image_id", "filename", "captions", "raw_captions"])
 
 
 class Vocabulary(object):

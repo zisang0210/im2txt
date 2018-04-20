@@ -49,8 +49,9 @@ def _to_image_meta_list(image_filenames, captions, image_dir,image_start_id = 0)
 
   for base_filename in image_filenames:
     filename = os.path.join(image_dir, base_filename)
-    image_captions = [process_caption(c) for c in captions[base_filename]]
-    image_metadata.append(ImageMetadata(image_id, filename, image_captions))
+    raw_captions = captions[base_filename]
+    image_captions = [process_caption(c) for c in raw_captions]
+    image_metadata.append(ImageMetadata(image_id, filename, image_captions, raw_captions))
     
     image_id += 1
     num_captions += len(captions)

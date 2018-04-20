@@ -45,6 +45,7 @@ class COCOEvalCap:
         # =================================================
         # Compute scores
         # =================================================
+        result = {}
         for scorer, method in scorers:
             print('computing %s score...'%(scorer.method()))
             score, scores = scorer.compute_score(gts, res)
@@ -52,12 +53,15 @@ class COCOEvalCap:
                 for sc, scs, m in zip(score, scores, method):
                     self.setEval(sc, m)
                     self.setImgToEvalImgs(scs, gts.keys(), m)
+                    result[m] = sc
                     print("%s: %0.3f"%(m, sc))
             else:
                 self.setEval(score, method)
                 self.setImgToEvalImgs(scores, gts.keys(), method)
                 print("%s: %0.3f"%(method, score))
+                result[method] = score
         self.setEvalImgs()
+        return result
 
     def setEval(self, score, method):
         self.eval[method] = score

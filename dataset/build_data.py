@@ -91,9 +91,10 @@ import random
 import sys
 import threading
 
-
 from PIL import Image
 import numpy as np
+import json
+
 import tensorflow as tf
 from flickr8k import load_flickr8k_dataset
 from coco import load_coco_dataset
@@ -140,8 +141,11 @@ tf.flags.DEFINE_string("unknown_word", "<UNK>",
 tf.flags.DEFINE_integer("min_word_count", 4,
                         "The minimum number of occurrences of each word in the "
                         "training set for inclusion in the vocabulary.")
+<<<<<<< HEAD:code/dataset/build_data.py
 tf.flags.DEFINE_string("word_counts_output_file", "/home/hillyess/coco_tfrecord/word_counts.txt",
                        "Output vocabulary file of word counts.")
+=======
+>>>>>>> 719757f3b61999105bdd7a5de0470625759adcd9:dataset/build_data.py
 
 tf.flags.DEFINE_integer("num_threads", 8,
                         "Number of threads to preprocess the images.")
@@ -294,6 +298,7 @@ def _to_sequence_example(image, decoder, vocab):
     return None
   context = tf.train.Features(feature={
       "image/image_id": _int64_feature(image.image_id),
+      "image/filename": _bytes_feature(bytes(image.filename, encoding = "utf8")),
       "image/data": _bytes_feature(feature_map.tostring()),
       "iamge/bounding_box": _bytes_feature(bounding_box.tostring())
   })
@@ -432,7 +437,7 @@ def _process_dataset(name, images, vocab, num_shards):
         (datetime.now(), len(images), name))
 
 
-def _create_vocab(captions):
+def _create_vocab(dataset,filename = 'word_counts.txt'):
   """Creates the vocabulary of word to word_id.
 
   The vocabulary is saved to disk in a text file of word counts. The id of each
@@ -445,6 +450,9 @@ def _create_vocab(captions):
     A Vocabulary object.
   """
   print("Creating vocabulary.")
+
+  captions = [c for image in dataset for c in image.captions]
+
   counter = Counter()
   for c in captions:
     counter.update(c)
@@ -456,9 +464,10 @@ def _create_vocab(captions):
   print("Words in vocabulary:", len(word_counts))
 
   # Write out the word counts file.
-  with tf.gfile.FastGFile(FLAGS.word_counts_output_file, "w") as f:
+  vocab_file_path = os.path.join(FLAGS.output_dir, filename)
+  with tf.gfile.FastGFile(vocab_file_path, "w") as f:
     f.write("\n".join(["%s %d" % (w, c) for w, c in word_counts]))
-  print("Wrote vocabulary file:", FLAGS.word_counts_output_file)
+  print("Wrote vocabulary file:", vocab_file_path)
 
   # Create the vocabulary dictionary.
   reverse_vocab = [x[0] for x in word_counts]
@@ -467,6 +476,16 @@ def _create_vocab(captions):
   vocab = Vocabulary(vocab_dict, unk_id)
 
   return vocab
+
+def _create_image_id_to_captions(dataset, filename):
+  id_to_cap = {}
+  for image in dataset:
+    id_to_cap[image.image_id] = image.raw_captions
+
+  file_path = os.path.join(FLAGS.output_dir, filename)
+  fp = open(file_path, 'w')
+  json.dump(id_to_cap, fp)
+  fp.close()
 
 def main(unused_argv):
   def _is_valid_num_shards(num_shards):
@@ -490,8 +509,11 @@ def main(unused_argv):
   train_dataset,val_dataset,test_dataset = load_dataset(FLAGS)
 
   # Create vocabulary from the training captions.
-  train_captions = [c for image in train_dataset for c in image.captions]
-  vocab = _create_vocab(train_captions)
+  vocab = _create_vocab(train_dataset)
+  # Create image id to captions dict for evaluation
+  _create_image_id_to_captions(train_dataset,filename='train_id_captions.json')
+  _create_image_id_to_captions(val_dataset,filename='val_id_captions.json')
+  _create_image_id_to_captions(test_dataset,filename='test_id_captions.json')
 
   _process_dataset("train", train_dataset, vocab, FLAGS.train_shards)
   _process_dataset("val", val_dataset, vocab, FLAGS.val_shards)

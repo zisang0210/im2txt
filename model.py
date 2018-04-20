@@ -26,7 +26,20 @@ class CaptionGenerator(BaseModel):
             self.target_seqs (training and eval only)
             self.input_mask (training and eval only)
         """
-        if self.is_train:
+        if self.mode == "inference":
+            # In inference mode, images and inputs are fed via placeholders.
+            image_feed = tf.placeholder(dtype=tf.string, shape=[], name="image_feed")
+            input_feed = tf.placeholder(dtype=tf.int64,
+                                                                    shape=[None],  # batch_size
+                                                                    name="input_feed")
+            # Process image and insert batch dimensions.
+            images = tf.expand_dims(self.process_image(image_feed), 0)
+            input_seqs = tf.expand_dims(input_feed, 1)
+
+            # No target sequences or input mask in inference mode.
+            input_mask = None
+
+        else:
             # Prefetch serialized SequenceExample protos.
             input_queue = input_ops.prefetch_input_data(
                     self.reader,
@@ -52,25 +65,13 @@ class CaptionGenerator(BaseModel):
                 images_and_captions.append([image, caption,mask])
 
             # Batch inputs.
-            queue_capacity = (2 * self.config.num_preprocess_threads *
+            queue_capacity = (4 * self.config.num_preprocess_threads *
                                                 self.config.batch_size)
             images, captions, input_mask = (
                     input_ops.batch_with_dynamic_pad(images_and_captions,
                                                      batch_size=self.config.batch_size,
                                                      queue_capacity=queue_capacity))
 
-        else:
-            # In inference mode, images and inputs are fed via placeholders.
-            image_feed = tf.placeholder(dtype=tf.string, shape=[], name="image_feed")
-            input_feed = tf.placeholder(dtype=tf.int64,
-                                                                    shape=[None],  # batch_size
-                                                                    name="input_feed")
-            # Process image and insert batch dimensions.
-            images = tf.expand_dims(self.process_image(image_feed), 0)
-            input_seqs = tf.expand_dims(input_feed, 1)
-
-            # No target sequences or input mask in inference mode.
-            input_mask = None
         
         self.images = images
         self.captions = captions
@@ -106,29 +107,10 @@ class CaptionGenerator(BaseModel):
         print("CNN built.")
 
     def build_rpn(self):
-
-        # config = self.config
-
-        # images = self.images
-        
-        # if config.pipeline_config_path:
-        #     model_configs = config_util.get_configs_from_pipeline_file(
-        #         config.pipeline_config_path)
-
-        # model_config = model_configs['model']
-
-        # if self.is_train:
-        #     model_fn = functools.partial(
-        #         model_builder.build,
-        #         model_config=model_config,
-        #         is_training=True)
-        # detection_model = model_fn()
-        # image_preprocessed = detection_model.preprocess(images) 
-        # features = detection_model.predict(image_preprocessed)
-        # feature = features['rpn_box_predictor_features']
-        # feature_reshaped = tf.reshape(feature,
-        #                     [config.batch_size, 1444, 512])
-        # print(feature)
+        """ 
+        Just assign necessary variables. Feature extraction has been done during 
+        data preparing. self.images has shape [batchsize, 100, 2048]
+        """
         self.num_ctx = 100
         self.dim_ctx = 2048
         self.conv_feats = self.images
@@ -495,48 +477,112 @@ class CaptionGenerator(BaseModel):
                                    name = 'fc_b2')
         return memory, output
 
+    def bias_attend(self, contexts, output):
+        """Use 1 fully connected layer to attend. Add bias when calculate softmax so
+        that LSTM is not necessarily turn to image feature generating each
+        word.
+
+        Args:
+        contexts: image feature of shape [batchsize 100 2048] after reshape, 
+                  become [batchsize*100 2048].
+        output: LSTM last generated hidden state.
+
+        Returns:
+        Attention weights alpha, has shape [batchsize 100].
+        """
+        logits1 = self.nn.dense(contexts,
+                                units = 1,
+                                activation = None,
+                                use_bias = False,
+                                name = 'fc_a')
+        logits1 = tf.reshape(logits1, [-1, self.num_ctx])
+        logits2 = self.nn.dense(output,
+                                units = self.num_ctx,
+                                activation = None,
+                                use_bias = False,
+                                name = 'fc_b')
+        logits = logits1 + logits2
+        attend_bias = tf.get_variable("attend_bias",[self.config.batch_size,1],
+                                    initialize=tf.constant_initializer(0.0))
+        bias_logits = tf.concat([logits,attend_bias],axis=1,name='attend_bias_logits')
+        bias_alpha = tf.nn.softmax(bias_logits)
+        alpha = tf.slice(bias_alpha,[0,0],[self.config.batch_size,self.num_ctx])
+        return alpha
+
+    def fc1_attend(self, contexts, output):
+        """use 1 fully connected layer to attend.
+
+        Args:
+        contexts: image feature of shape [batchsize 100 2048] after reshape, 
+                  become [batchsize*100 2048].
+        output: LSTM last generated hidden state.
+
+        Returns:
+        Attention weights alpha, has shape [batchsize 100].
+        """
+        logits1 = self.nn.dense(contexts,
+                                units = 1,
+                                activation = None,
+                                use_bias = False,
+                                name = 'fc_a')
+        logits1 = tf.reshape(logits1, [-1, self.num_ctx])
+        logits2 = self.nn.dense(output,
+                                units = self.num_ctx,
+                                activation = None,
+                                use_bias = False,
+                                name = 'fc_b')
+        logits = logits1 + logits2
+        alpha = tf.nn.softmax(logits)
+        return alpha
+
+    def fc2_attend(self, contexts, output):
+        """use 2 fully connected layer to attend.
+
+        Args:
+        contexts: image feature of shape [batchsize 100 2048] after reshape, 
+                  become [batchsize*100 2048].
+        output: LSTM last generated hidden state.
+
+        Returns:
+        Attention weights alpha, has shape [batchsize 100].
+        """
+        temp1 = self.nn.dense(contexts,
+                              units = self.config.dim_attend_layer,
+                              activation = tf.tanh,
+                              name = 'fc_1a')
+        temp2 = self.nn.dense(output,
+                              units = self.config.dim_attend_layer,
+                              activation = tf.tanh,
+                              name = 'fc_1b')
+        temp2 = tf.tile(tf.expand_dims(temp2, 1), [1, self.num_ctx, 1])
+        temp2 = tf.reshape(temp2, [-1, self.config.dim_attend_layer])
+        temp = temp1 + temp2
+        temp = self.nn.dropout(temp)
+        logits = self.nn.dense(temp,
+                               units = 1,
+                               activation = None,
+                               use_bias = False,
+                               name = 'fc_2')
+        logits = tf.reshape(logits, [-1, self.num_ctx])
+        alpha = tf.nn.softmax(logits)
+        return alpha
+
     def attend(self, contexts, output):
         """ Attention Mechanism. """
-        config = self.config
+
         reshaped_contexts = tf.reshape(contexts, [-1, self.dim_ctx])
         reshaped_contexts = self.nn.dropout(reshaped_contexts)
         output = self.nn.dropout(output)
-        if config.num_attend_layers == 1:
-            # use 1 fc layer to attend
-            logits1 = self.nn.dense(reshaped_contexts,
-                                    units = 1,
-                                    activation = None,
-                                    use_bias = False,
-                                    name = 'fc_a')
-            logits1 = tf.reshape(logits1, [-1, self.num_ctx])
-            logits2 = self.nn.dense(output,
-                                    units = self.num_ctx,
-                                    activation = None,
-                                    use_bias = False,
-                                    name = 'fc_b')
-            logits = logits1 + logits2
+        
+        if self.config.attention_mechanism == "bias":
+            print("bias attend")
+            return self.bias_attend(reshaped_contexts,output)
+        elif self.config.attention_mechanism == "rnn":
+            return self.fc1_attend(reshaped_contexts,output)        
+        elif self.config.attention_mechanism == "fc1":
+            return self.fc1_attend(reshaped_contexts,output)
         else:
-            # use 2 fc layers to attend
-            temp1 = self.nn.dense(reshaped_contexts,
-                                  units = config.dim_attend_layer,
-                                  activation = tf.tanh,
-                                  name = 'fc_1a')
-            temp2 = self.nn.dense(output,
-                                  units = config.dim_attend_layer,
-                                  activation = tf.tanh,
-                                  name = 'fc_1b')
-            temp2 = tf.tile(tf.expand_dims(temp2, 1), [1, self.num_ctx, 1])
-            temp2 = tf.reshape(temp2, [-1, config.dim_attend_layer])
-            temp = temp1 + temp2
-            temp = self.nn.dropout(temp)
-            logits = self.nn.dense(temp,
-                                   units = 1,
-                                   activation = None,
-                                   use_bias = False,
-                                   name = 'fc_2')
-            logits = tf.reshape(logits, [-1, self.num_ctx])
-        alpha = tf.nn.softmax(logits)
-        return alpha
+            return self.fc2_attend(reshaped_contexts,output)
 
     def decode(self, expanded_output):
         """ Decode the expanded output of the LSTM into a word. """

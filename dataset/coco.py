@@ -39,8 +39,9 @@ def _load_coco_metadata(captions_file, image_dir):
   num_captions = 0
   for image_id, base_filename in id_to_filename:
     filename = os.path.join(image_dir, base_filename)
-    captions = [process_caption(c) for c in id_to_captions[image_id]]
-    image_metadata.append(ImageMetadata(image_id, filename, captions))
+    raw_captions = id_to_captions[image_id]
+    captions = [process_caption(c) for c in raw_captions]
+    image_metadata.append(ImageMetadata(image_id, filename, captions, raw_captions))
     num_captions += len(captions)
   print("Finished processing %d captions for %d images in %s" %
         (num_captions, len(id_to_filename), captions_file))

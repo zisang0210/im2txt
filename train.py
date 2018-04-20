@@ -8,11 +8,13 @@ from dataset import prepare_train_data, prepare_eval_data, prepare_test_data
 FLAGS = tf.app.flags.FLAGS
 
 
-tf.flags.DEFINE_string('data_file', '../data/coco/train-?????-of-00256',
+tf.flags.DEFINE_string('input_file_pattern', '../data/flickr8k/train-?????-of-00064',
                        'Image feature extracted using faster rcnn and corresponding captions')
 tf.flags.DEFINE_string("optimizer", "Adam",
                         "Adam, RMSProp, Momentum or SGD")
-tf.flags.DEFINE_integer("number_of_steps", 1000000, 
+tf.flags.DEFINE_string("attention", "fc1",
+                        "fc1, fc2, rnn or bias")
+tf.flags.DEFINE_integer("number_of_steps", 10, 
                         "Number of training steps.")
 # tf.flags.DEFINE_boolean('train_cnn', False,
 #                         'Turn on to train both CNN and RNN. \
@@ -24,8 +26,9 @@ tf.logging.set_verbosity(tf.logging.INFO)
 
 def main(argv):
     config = Config()
-    config.input_file_pattern = FLAGS.data_file
+    config.input_file_pattern = FLAGS.input_file_pattern
     config.optimizer = FLAGS.optimizer
+    config.attention = FLAGS.attention
 
     # Create training directory.
     train_dir = config.save_dir
