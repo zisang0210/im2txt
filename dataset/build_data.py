@@ -106,30 +106,30 @@ from common import Vocabulary, ImageMetadata
 tf.flags.DEFINE_string("graph_path", "/home/hillyess/ai/project-image-caption/faster_rcnn_resnet50_coco/exported_graphs/frozen_inference_graph.pb",
                        "Faster rcnn forzen graph.")
 
-tf.flags.DEFINE_string('dataset',"flickr8k",
+tf.flags.DEFINE_string('dataset', "coco",
                        "Must be flickr8k, flickr30k, or coco")
 # coco path
-tf.flags.DEFINE_string("train_image_dir", "/tmp/train2014/",
+tf.flags.DEFINE_string("train_image_dir", "/home/hillyess/ai/coco/images/train2014",
                        "Training image directory.")
-tf.flags.DEFINE_string("val_image_dir", "/tmp/val2014",
+tf.flags.DEFINE_string("val_image_dir", "/home/hillyess/ai/coco/images/val2014",
                        "Validation image directory.")
-tf.flags.DEFINE_string("train_captions_file", "/tmp/captions_train2014.json",
+tf.flags.DEFINE_string("train_captions_file", "/home/hillyess/ai/coco/annotations/captions_train2014.json",
                        "Training captions JSON file.")
-tf.flags.DEFINE_string("val_captions_file", "/tmp/captions_val2014.json",
+tf.flags.DEFINE_string("val_captions_file", "/home/hillyess/ai/coco/annotations/captions_val2014.json",
                        "Validation captions JSON file.")
 # flickr8k path
-tf.flags.DEFINE_string("image_dir", "/home/hillyess/ai/project-image-caption/Flickr8k/Flicker8k_Dataset/",
+tf.flags.DEFINE_string("image_dir", "/home/hillyess/ai/project-image-caption/Flickr8k/Flicker8k_Dataset",
                        "Directory containing the image files.")
 tf.flags.DEFINE_string("text_path", "/home/hillyess/ai/project-image-caption/Flickr8k/Flickr8k_text",
                        "containing txt files about image caption annotations.")
 
-tf.flags.DEFINE_string("output_dir", "/home/hillyess/flick8k_tfrecord", "Output data directory.")
+tf.flags.DEFINE_string("output_dir", "/home/hillyess/coco_tfrecord", "Output data directory.")
 
-tf.flags.DEFINE_integer("train_shards", 16,
+tf.flags.DEFINE_integer("train_shards", 256,
                         "Number of shards in training TFRecord files.")
-tf.flags.DEFINE_integer("val_shards", 4,
+tf.flags.DEFINE_integer("val_shards", 8,
                         "Number of shards in validation TFRecord files.")
-tf.flags.DEFINE_integer("test_shards", 8,
+tf.flags.DEFINE_integer("test_shards", 16,
                         "Number of shards in testing TFRecord files.")
 
 tf.flags.DEFINE_string("start_word", "<S>",
@@ -142,7 +142,11 @@ tf.flags.DEFINE_integer("min_word_count", 4,
                         "The minimum number of occurrences of each word in the "
                         "training set for inclusion in the vocabulary.")
 
-tf.flags.DEFINE_integer("num_threads", 8,
+tf.flags.DEFINE_string("word_counts_output_file", "/home/hillyess/coco_tfrecord/word_counts.txt",
+                       "Output vocabulary file of word counts.")
+
+
+tf.flags.DEFINE_integer("num_threads", 4,
                         "Number of threads to preprocess the images.")
 
 FLAGS = tf.flags.FLAGS
@@ -198,10 +202,15 @@ class ImageDecoder(object):
   def extract_faster_rcnn_feature(self, filename):
     try:
       image = Image.open(filename)
-    except:
+    except FileNotFoundError:
       return None
 
-    image_np = self.load_image_into_numpy_array(image)
+    try:
+      image_np = self.load_image_into_numpy_array(image)
+    except ValueError:
+      return None
+
+
     image_np_expanded = np.expand_dims(image_np, axis=0)
     (boxes,feat) = self._sess.run(
                         [self._proposal_boxes,self._feature],
@@ -210,9 +219,9 @@ class ImageDecoder(object):
 
   def load_image_into_numpy_array(self, image):
       (im_width, im_height) = image.size
+
       return np.array(image.getdata()).reshape(
           (im_height, im_width, 3)).astype(np.uint8)
-
 
 def _int64_feature(value):
   """Wrapper for inserting an int64 Feature into a SequenceExample proto."""
@@ -264,6 +273,18 @@ def _bytes_list_feature_list(values):
   """Wrapper for inserting a bytes FeatureList into a SequenceExample proto."""
   return tf.train.FeatureList(feature=[_bytes_list_feature(v) for v in values])
 
+def fix_length_list(lista, fixed_length):
+  if len(lista)>fixed_length:
+    return lista[:fixed_length]
+  elif len(lista)<fixed_length:
+    i=0
+    while len(lista)<fixed_length:
+      lista.append(lista[i])
+      i = i + 1
+    return lista
+  else:
+    return lista
+
 
 def _to_sequence_example(image, decoder, vocab):
   """Builds a SequenceExample proto for an image-caption pair.
@@ -286,22 +307,27 @@ def _to_sequence_example(image, decoder, vocab):
   #   print("Skipping file with invalid JPEG data: %s" % image.filename)
   #   return
   
-  assert len(image.captions) == 5
+  #
+  #if not (len(image.captions) == 5):
+  #  print(image.captions)
+  #  pass
+  image_captions = fix_length_list(image.captions, 5)
+  assert len(image_captions) == 5
   try:
     bounding_box, feature_map = decoder.extract_faster_rcnn_feature(image.filename)
-  except:
+  except TypeError:
     return None
   context = tf.train.Features(feature={
       "image/image_id": _int64_feature(image.image_id),
-      "image/filename": _bytes_feature(bytes(image.filename, encoding = "utf8")),
+      "image/filename": _bytes_feature(bytes(image.filename, encoding="utf8")),
       "image/data": _bytes_feature(feature_map.tostring()),
       "iamge/bounding_box": _bytes_feature(bounding_box.tostring())
   })
 
   img_captions_ids = []
   img_captions_mask = []
-  for i in range(len(image.captions)):
-    caption = image.captions[i]
+  for i in range(len(image_captions)):
+    caption = image_captions[i]
     caption_ids = [vocab.word_to_id(word) for word in caption]
     caption_num_words = len(caption_ids)
     if caption_num_words > 21:
@@ -317,7 +343,8 @@ def _to_sequence_example(image, decoder, vocab):
     img_captions_mask.append(current_masks)
 
   feature_lists = tf.train.FeatureLists(feature_list={
-      "image/caption": _bytes_list_feature_list(image.captions),
+      "iamge/raw_caption":_bytes_feature_list(image.raw_captions),
+      "image/caption": _bytes_list_feature_list(image_captions),
       "image/caption_ids": _int64_list_feature_list(img_captions_ids),
       "image/caption_mask": _float_list_feature_list(img_captions_mask)
   })
