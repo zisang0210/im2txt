@@ -9,6 +9,8 @@ FLAGS = tf.app.flags.FLAGS
 
 tf.flags.DEFINE_string('input_file_pattern', '../data/flickr8k/train-?????-of-00064',
                        'Image feature extracted using faster rcnn and corresponding captions')
+tf.flags.DEFINE_string('train_dir', '../output/model',
+                       'Model checkpoints and summary save here')
 tf.flags.DEFINE_string("optimizer", "Adam",
                         "Adam, RMSProp, Momentum or SGD")
 tf.flags.DEFINE_string("attention", "fc1",
@@ -28,7 +30,8 @@ def main(argv):
     config.input_file_pattern = FLAGS.input_file_pattern
     config.optimizer = FLAGS.optimizer
     config.attention = FLAGS.attention
-
+    config.save_dir = FLAGS.train_dir
+    
     # Create training directory.
     train_dir = config.save_dir
     if not tf.gfile.IsDirectory(train_dir):
