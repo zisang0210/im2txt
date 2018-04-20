@@ -294,6 +294,7 @@ def _to_sequence_example(image, decoder, vocab):
     return None
   context = tf.train.Features(feature={
       "image/image_id": _int64_feature(image.image_id),
+      "image/filename": _bytes_feature(image.filename),
       "image/data": _bytes_feature(feature_map.tostring()),
       "iamge/bounding_box": _bytes_feature(bounding_box.tostring())
   })
