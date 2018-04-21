@@ -80,20 +80,20 @@ class Config(object):
         # value less than the actual vocab size will result in an error.
         self.vocabulary_size = 12000
 
-        # about the training
-        self.train_image_dir = './train/images/'
-        self.train_caption_file = './train/captions_train2014.json'
-        self.temp_annotation_file = './train/anns.csv'
-        self.temp_data_file = './train/data.npy'
+        # # about the training
+        # self.train_image_dir = './train/images/'
+        # self.train_caption_file = './train/captions_train2014.json'
+        # self.temp_annotation_file = './train/anns.csv'
+        # self.temp_data_file = './train/data.npy'
 
         # about the evaluation
-        self.eval_image_dir = './val/images/'
-        self.eval_caption_file = './val/captions_val2014.json'
-        self.eval_result_dir = './val/results/'
-        self.eval_result_file = './val/results.json'
-        self.save_eval_result_as_image = False
+        # self.eval_image_dir = './val/images/'
+        # self.eval_caption_file = './val/captions_val2014.json'
+        self.eval_result_dir = '../val/results/'
+        self.eval_result_file = '../val/results.json'
+        self.save_eval_result_as_image = True
 
         # about the testing
-        self.test_image_dir = './test/images/'
-        self.test_result_dir = './test/results/'
-        self.test_result_file = './test/results.csv'
+        # self.test_image_dir = './test/images/'
+        # self.test_result_dir = './test/results/'
+        # self.test_result_file = './test/results.csv'
