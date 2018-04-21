@@ -78,7 +78,7 @@ def parse_eval_example(serialized):
           "iamge/bounding_box":tf.FixedLenFeature([], dtype=tf.string),
       },
       sequence_features={
-          "iamge/raw_caption": tf.FixedLenFeature([], dtype=tf.string)
+          "iamge/raw_caption": tf.FixedLenFeature([], dtype=tf.string),
           "image/caption_ids": tf.FixedLenSequenceFeature([21], dtype=tf.int64),
           "image/caption_mask": tf.FixedLenSequenceFeature([21], dtype=tf.float32),
       })
