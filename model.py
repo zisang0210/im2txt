@@ -74,15 +74,15 @@ class CaptionGenerator(BaseModel):
                 images_and_captions = []
                 for thread_id in range(self.config.num_preprocess_threads):
                     serialized_sequence_example = input_queue.dequeue()
-                    filenames, images, captions, bounding_box = \
+                    images, image_ids, filenames, captions, bounding_box = \
                             input_ops.parse_eval_example(serialized_sequence_example)
-                    images_and_captions.append([filenames, images, captions,bounding_box])
+                    images_and_captions.append([images, image_ids, filenames, captions,bounding_box])
 
                 # Batch inputs.
                 queue_capacity = (2 * self.config.num_preprocess_threads *
                                                     self.config.batch_size)
-                self.filenames, self.images, self.captions, self.bounding_box = \
-                                    tf.train.batch_join(images_and_captions,
+                self.images,self.image_ids, self.filenames, self.captions, self.bounding_box \
+                                  = tf.train.batch_join(images_and_captions,
                                                           batch_size=self.config.batch_size,
                                                           capacity=queue_capacity,
                                                           dynamic_pad=True,
@@ -352,7 +352,7 @@ class CaptionGenerator(BaseModel):
         last_state = last_memory, last_output
 
         # Generate the words one by one
-        for idx in range(num_steps):
+        for idx in range(1,num_steps+1):
             # Attention mechanism
             with tf.variable_scope("attend"):
                 alpha = self.attend(contexts, last_output)

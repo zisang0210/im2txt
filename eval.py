@@ -59,31 +59,32 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
   results = []
 
   for i in range(num_eval_batches):
-    filenames, images, caps,box = sess.run([
-                model.filenames, model.images, model.captions, model.bounding_box
+    # current batch sample
+    filenames, image_ids, caps,box = sess.run([
+                model.filenames, model.image_ids, model.captions, model.bounding_box
                 ])
-    print(filenames,images,caps,box)
-  #   caption_data = model.beam_search(sess, vocab)
+    # generate batch captions
+    caption_data = model.beam_search(sess, vocab)
     
-  #   # generate caption in order to caluculate bleu-1 to blue-4 and cider etc
-  #   for l in range(len(caption_data)):
-  #       word_idxs = caption_data[l][0].sentence
-  #       score = caption_data[l][0].score
-  #       caption = vocab.get_sentence(word_idxs)
-  #       results.append({image_ids[l]:[caption]})
+    # generate caption in order to caluculate bleu-1 to blue-4 and cider etc
+    for l in range(len(caption_data)):
+        word_idxs = caption_data[l][0].sentence
+        score = caption_data[l][0].score
+        caption = vocab.get_sentence(word_idxs)
+        results.append({image_ids[l]:[caption]})
 
-  #       # Save the result in an image file, if requested
-  #       if config.save_eval_result_as_image:
-  #           image_file = image_filenames[l]
-  #           image_name = image_file.split(os.sep)[-1]
-  #           image_name = os.path.splitext(image_name)[0]
-  #           img = plt.imread(image_file)
-  #           plt.imshow(img)
-  #           plt.axis('off')
-  #           plt.title(caption)
-  #           plt.savefig(os.path.join(config.eval_result_dir,
-  #                                    image_name+'_result.jpg'))
-
+        # # Save the result in an image file, if requested
+        # if config.save_eval_result_as_image:
+        #     image_file = image_filenames[l]
+        #     image_name = image_file.split(os.sep)[-1]
+        #     image_name = os.path.splitext(image_name)[0]
+        #     img = plt.imread(image_file)
+        #     plt.imshow(img)
+        #     plt.axis('off')
+        #     plt.title(caption)
+        #     plt.savefig(os.path.join(config.eval_result_dir,
+        #                              image_name+'_result.jpg'))
+    print(results)
   #   # for perplexity calculation
   #   cross_entropy_losses, weights = sess.run([
   #       model.cross_entropy_loss,

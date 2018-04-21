@@ -182,7 +182,7 @@ class BaseModel(object):
             num_steps = 1 if idx == 0 else config.beam_size
             for b in range(num_steps):
                 if idx == 0:
-                    last_word = np.zeros((config.batch_size), np.int32)
+                    last_word = vocabulary.start_id * np.ones((config.batch_size), np.int32)
                 else:
                     last_word = np.array([pcl[b].sentence[-1]
                                         for pcl in partial_caption_data_lists],
