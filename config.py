@@ -69,8 +69,8 @@ class Config(object):
 
         # about the saver
         self.save_period = 1000
-        self.save_dir = '../output/model'
-        self.eval_dir = '../output/eval'
+        self.save_dir = '/home/hillyess/ai/project-image-caption/output/model'
+        self.eval_dir = '/home/hillyess/ai/project-image-caption/output/eval'
         # about the vocabulary
         self.vocabulary_file = './vocabulary.csv'
         # Number of unique words in the vocab (plus 1, for <UNK>).
