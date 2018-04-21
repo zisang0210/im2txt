@@ -89,6 +89,7 @@ To evaluate a trained model using the flickr30 data, run a command like this:
 ```shell
 python eval.py --input_file_pattern='../data/flickr8k/val-?????-of-00008' \
     --checkpoint_dir='../output/model' \
+    --attention='bias' \
     --eval_dir='../output/eval' \
     --min_global_step=10 \
     --num_eval_examples=32 \

@@ -20,6 +20,8 @@ tf.flags.DEFINE_string("input_file_pattern", "../data/flickr8k/train-?????-of-00
                        "File pattern of sharded TFRecord input files.")
 tf.flags.DEFINE_string("checkpoint_dir", "../output/model",
                        "Directory containing model checkpoints.")
+tf.flags.DEFINE_string("attention", "fc1",
+                        "fc1, fc2, rnn or bias. Must correspond to checkpoint file!")
 tf.flags.DEFINE_string("eval_dir", "../output/eval", 
                        "Directory to write event logs.")
 tf.flags.DEFINE_string("vocab_file", "../data/flickr8k/word_counts.txt", 
