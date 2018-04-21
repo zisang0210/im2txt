@@ -4,6 +4,8 @@ import time
 import os
 import math
 import json
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 from config import Config
