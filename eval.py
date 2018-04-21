@@ -209,6 +209,8 @@ def run():
     config = Config()
     config.input_file_pattern = FLAGS.input_file_pattern
     config.beam_size = FLAGS.beam_size
+    config.attention_mechanism = FLAGS.attention
+
 
     # Build the model for evaluation.
     model = CaptionGenerator(config, mode="eval") 
