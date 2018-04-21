@@ -72,23 +72,29 @@ def parse_eval_example(serialized):
   context, sequence = tf.parse_single_sequence_example(
       serialized,
       context_features={
-          "image/image_id": tf.FixedLenFeature([],dtype=tf.int64),
+          # "image/image_id": tf.FixedLenFeature([],dtype=tf.int64),
           "image/filename": tf.FixedLenFeature([], dtype=tf.string),
           "image/data": tf.FixedLenFeature([], dtype=tf.string),
           "iamge/bounding_box":tf.FixedLenFeature([], dtype=tf.string),
       },
       sequence_features={
           "iamge/raw_caption": tf.FixedLenFeature([], dtype=tf.string),
-          "image/caption_ids": tf.FixedLenSequenceFeature([21], dtype=tf.int64),
-          "image/caption_mask": tf.FixedLenSequenceFeature([21], dtype=tf.float32),
+          # "image/caption_ids": tf.FixedLenSequenceFeature([21], dtype=tf.int64),
+          # "image/caption_mask": tf.FixedLenSequenceFeature([21], dtype=tf.float32),
       })
   filename = context['image/filename']
+
   encoded_image = context["image/data"]
   img = tf.decode_raw(encoded_image,tf.float32)
   img = tf.reshape(img,[100,2048])
+
+  bounding_box = context["image/bounding_box"]
+  bounding_box = tf.decode_raw(bounding_box,tf.float32)
+  bounding_box = tf.reshape(bounding_box,[100,4])
+
   caption = sequence["image/raw_caption"]
 
-  return filename, img, caption
+  return filename, img, caption, bounding_box
 
 def prefetch_input_data(reader,
                         file_pattern,

@@ -59,10 +59,10 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
   results = []
 
   for i in range(num_eval_batches):
-    filenames, images, caps = sess.run([
+    filenames, images, caps,box = sess.run([
                 model.filenames, model.images, model.captions
                 ])
-    print(filenames,images,caps)
+    print(filenames,images,caps,box)
   #   caption_data = model.beam_search(sess, vocab)
     
   #   # generate caption in order to caluculate bleu-1 to blue-4 and cider etc

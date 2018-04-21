@@ -74,8 +74,8 @@ class CaptionGenerator(BaseModel):
                 images_and_captions = []
                 for thread_id in range(self.config.num_preprocess_threads):
                     serialized_sequence_example = input_queue.dequeue()
-                    self.filenames, self.images, self.captions = input_ops.parse_eval_example(
-                            serialized_sequence_example)
+                    self.filenames, self.images, self.captions, self.bounding_box = 
+                            input_ops.parse_eval_example(serialized_sequence_example)
                     # images_and_captions.append([filename, img, caption])
 
                 # # Batch inputs.
