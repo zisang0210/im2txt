@@ -29,7 +29,7 @@ def main(argv):
     config = Config()
     config.input_file_pattern = FLAGS.input_file_pattern
     config.optimizer = FLAGS.optimizer
-    config.attention = FLAGS.attention
+    config.attention_mechanism = FLAGS.attention
     config.save_dir = FLAGS.train_dir
     
     # Create training directory.
