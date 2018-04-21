@@ -3,6 +3,7 @@ import tensorflow as tf
 import time
 import os
 import math
+import json
 import matplotlib.pyplot as plt
 
 from config import Config
@@ -32,8 +33,16 @@ tf.flags.DEFINE_integer("num_eval_examples", 10132,
 tf.flags.DEFINE_integer("min_global_step", 5000,
                         "Minimum global step to run evaluation.")
 
-tf.flags.DEFINE_integer('beam_size', 3,
-                        'The size of beam search for caption generation')
+tf.flags.DEFINE_integer("beam_size", 3,
+                        "The size of beam search for caption generation")
+
+tf.flags.DEFINE_boolean("save_eval_result_as_image", False,
+                        "Turn on to save captioned images. if True, please \
+                        specified eval_result_dir and val_raw_image_dir")
+tf.flags.DEFINE_string("eval_result_dir", None, 
+                       "Directory to save captioned images and captions.")
+tf.flags.DEFINE_string("val_raw_image_dir", None, 
+                       "Directory that stores raw images.")
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -55,15 +64,18 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
       math.ceil(FLAGS.num_eval_examples / model.config.batch_size))
 
   start_time = time.time()
-  sum_losses = 0.
-  sum_weights = 0.
-  results = []
-
+  # for perplexity calculation
+  sum_losses = 0
+  sum_length = 0
+  results = {}
+  eval_gt = {}
   for i in range(num_eval_batches):
     # current batch sample
     filenames, image_ids, caps,box = sess.run([
                 model.filenames, model.image_ids, model.captions, model.bounding_box
                 ])
+    # print(caps,type(caps),caps.dtype,caps.shape)
+    # print(box,type(box),box.dtype)
     # generate batch captions
     caption_data = model.beam_search(sess, vocab)
     
@@ -71,43 +83,40 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
     for l in range(len(caption_data)):
         word_idxs = caption_data[l][0].sentence
         score = caption_data[l][0].score
+        sum_losses += score
+        sum_length += len(word_idxs)
         caption = vocab.get_sentence(word_idxs)
-        results.append({image_ids[l]:[caption]})
+        results[image_ids[l]] = [{'caption':caption}]
+        eval_gt[image_ids[l]] = [{'caption':byte_str.decode()} for byte_str in caps[l]]
 
         # Save the result in an image file, if requested
-        if model.config.save_eval_result_as_image:
+        if FLAGS.save_eval_result_as_image:
             image_file = filenames[l].decode()
             image_name = image_file.split(os.sep)[-1]
-            image_name = os.path.splitext(image_name)[0]
-            img = plt.imread(image_file)
+            img = plt.imread(os.path.join(FLAGS.val_raw_image_dir,image_name))
+
             plt.imshow(img)
             plt.axis('off')
             plt.title(caption)
-            plt.savefig(os.path.join(model.config.eval_result_dir,
-                                     image_name+'_result.jpg'))
+            plt.savefig(os.path.join(FLAGS.eval_result_dir,
+                            os.path.splitext(image_name)[0]+'_result.jpg'))
 
-  #   # for perplexity calculation
-  #   cross_entropy_losses, weights = sess.run([
-  #       model.cross_entropy_loss,
-  #       model.masks
-  #   ])
-  #   sum_losses += np.sum(cross_entropy_losses * weights)
-  #   sum_weights += np.sum(weights)
-  #   if not i % 100:
-  #     tf.logging.info("Computed scores for %d of %d batches.", i + 1,
-  #                     num_eval_batches)
+    if not i % 100:
+      tf.logging.info("Computed scores for %d of %d batches.", i + 1,
+                      num_eval_batches)
   
-  # fp = open(model.config.eval_result_file, 'w')
+  # # comment due to json does not support integer key
+  # fp = open('%s-%d'%(os.path.join(FLAGS.eval_result_dir,'results.json'),global_step), 'w')
   # json.dump(results, fp)
   # fp.close()
 
-  # # Evaluate these captions. Caculate blue-4, metor and cider etc
+  # Evaluate these captions. Caculate blue-4, metor and cider etc
   # eval_gt = json.load(open(model.config.eval_caption_file))
   # eval_result = json.load(open(model.config.eval_result_file))
-  # scorer = COCOEvalCap(eval_gt, eval_result)
-  # result = scorer.evaluate()
-
-  # perplexity = math.exp(sum_losses / sum_weights)
+  scorer = COCOEvalCap()
+  result = scorer.evaluate(eval_gt, results)
+  print(result)
+  perplexity = sum_losses / sum_length
 
   # def add_summary(tag, value):
   #   summary = tf.Summary()
@@ -123,9 +132,9 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
   # # Write the Events file to the eval directory.
   # summary_writer.flush()
 
-  # eval_time = time.time() - start_time
-  # tf.logging.info("Finished evaluation at global step %d, Perplexity = %f (%.2g sec).",
-  #                 global_step, perplexity, eval_time)
+  eval_time = time.time() - start_time
+  tf.logging.info("Finished evaluation at global step %d, Perplexity = %f (%.2g sec).",
+                  global_step, perplexity, eval_time)
 
 
 def run_once(model,vocab, saver, summary_writer):
@@ -182,6 +191,12 @@ def run():
   if not tf.gfile.IsDirectory(eval_dir):
     tf.logging.info("Creating eval directory: %s", eval_dir)
     tf.gfile.MakeDirs(eval_dir)
+
+  # Create the result image directory if it doesn't exist.
+  if FLAGS.save_eval_result_as_image:
+    if not tf.gfile.IsDirectory(FLAGS.eval_result_dir):
+      tf.logging.info("Creating eval directory: %s", FLAGS.eval_result_dir)
+      tf.gfile.MakeDirs(FLAGS.eval_result_dir)
 
   # build vocabulary file
   vocab = vocabulary.Vocabulary(FLAGS.vocab_file)

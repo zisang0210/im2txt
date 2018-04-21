@@ -92,7 +92,10 @@ python eval.py --input_file_pattern='../data/flickr8k/val-?????-of-00008' \
     --eval_dir='../output/eval' \
     --min_global_step=10 \
     --num_eval_examples=32 \
-    --beam_size=3
+    --beam_size=3 \
+    --save_eval_result_as_image \
+    --eval_result_dir='../val/results/' \
+    --val_raw_image_dir='/home/zisang/Documents/code/data/Flicker8k/Flicker8k_Dataset'
 ```
 The result will be shown in stdout. Furthermore, the generated captions will be saved in the file `output/val/flickr30_results.json`.
 

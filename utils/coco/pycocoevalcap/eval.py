@@ -6,22 +6,22 @@ from .rouge.rouge import Rouge
 from .cider.cider import Cider
 
 class COCOEvalCap:
-    def __init__(self, coco, cocoRes):
-        self.evalImgs = []
+    def __init__(self):
+        # self.evalImgs = []
         self.eval = {}
-        self.imgToEval = {}
-        self.coco = coco
-        self.cocoRes = cocoRes
-        self.params = {'image_id': cocoRes.getImgIds()}
+        # self.imgToEval = {}
+        # self.coco = coco
+        # self.cocoRes = cocoRes
+        # self.params = {'image_id': cocoRes.getImgIds()}
 
-    def evaluate(self):
-        imgIds = self.params['image_id']
-        # imgIds = self.coco.getImgIds()
-        gts = {}
-        res = {}
-        for imgId in imgIds:
-            gts[imgId] = self.coco.imgToAnns[imgId]
-            res[imgId] = self.cocoRes.imgToAnns[imgId]
+    def evaluate(self, gts, res):
+        # imgIds = self.params['image_id']
+        # # imgIds = self.coco.getImgIds()
+        # gts = {}
+        # res = {}
+        # for imgId in imgIds:
+        #     gts[imgId] = self.coco.imgToAnns[imgId]
+        #     res[imgId] = self.cocoRes.imgToAnns[imgId]
 
         # =================================================
         # Set up scorers
@@ -45,33 +45,30 @@ class COCOEvalCap:
         # =================================================
         # Compute scores
         # =================================================
-        result = {}
         for scorer, method in scorers:
             print('computing %s score...'%(scorer.method()))
             score, scores = scorer.compute_score(gts, res)
             if type(method) == list:
                 for sc, scs, m in zip(score, scores, method):
                     self.setEval(sc, m)
-                    self.setImgToEvalImgs(scs, gts.keys(), m)
-                    result[m] = sc
+                    # self.setImgToEvalImgs(scs, gts.keys(), m)
                     print("%s: %0.3f"%(m, sc))
             else:
                 self.setEval(score, method)
-                self.setImgToEvalImgs(scores, gts.keys(), method)
+                # self.setImgToEvalImgs(scores, gts.keys(), method)
                 print("%s: %0.3f"%(method, score))
-                result[method] = score
-        self.setEvalImgs()
-        return result
+        # self.setEvalImgs()
+        return self.eval
 
     def setEval(self, score, method):
         self.eval[method] = score
 
-    def setImgToEvalImgs(self, scores, imgIds, method):
-        for imgId, score in zip(imgIds, scores):
-            if not imgId in self.imgToEval:
-                self.imgToEval[imgId] = {}
-                self.imgToEval[imgId]["image_id"] = imgId
-            self.imgToEval[imgId][method] = score
+    # def setImgToEvalImgs(self, scores, imgIds, method):
+    #     for imgId, score in zip(imgIds, scores):
+    #         if not imgId in self.imgToEval:
+    #             self.imgToEval[imgId] = {}
+    #             self.imgToEval[imgId]["image_id"] = imgId
+    #         self.imgToEval[imgId][method] = score
 
-    def setEvalImgs(self):
-        self.evalImgs = [eval for imgId, eval in self.imgToEval.items()]
+    # def setEvalImgs(self):
+    #     self.evalImgs = [eval for imgId, eval in self.imgToEval.items()]

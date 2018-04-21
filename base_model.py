@@ -165,7 +165,7 @@ class BaseModel(object):
             initial_beam = CaptionData(sentence = [],
                                        memory = initial_memory[k],
                                        output = initial_output[k],
-                                       score = 1.0)
+                                       score = 0)
             partial_caption_data.append(TopN(config.beam_size))
             partial_caption_data[-1].push(initial_beam)
             complete_caption_data.append(TopN(config.beam_size))
@@ -211,7 +211,7 @@ class BaseModel(object):
                     # Append each of these words to the current partial caption
                     for w, s in words_and_scores:
                         sentence = caption_data.sentence + [w]
-                        score = caption_data.score * s
+                        score = caption_data.score - np.log2(s)
                         beam = CaptionData(sentence,
                                            memory[k],
                                            output[k],
