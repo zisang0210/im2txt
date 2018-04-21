@@ -122,10 +122,10 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
   # print(result)
   perplexity = sum_losses / sum_length
 
-  def add_summary(tag, value):
+  def add_summary(tag, score):
     summary = tf.Summary()
     value = summary.value.add()
-    value.simple_value = value
+    value.simple_value = score
     value.tag = tag
     summary_writer.add_summary(summary, global_step)
 
