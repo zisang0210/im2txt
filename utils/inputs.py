@@ -78,7 +78,7 @@ def parse_eval_example(serialized):
           "iamge/bounding_box":tf.FixedLenFeature([], dtype=tf.string),
       },
       sequence_features={
-          "iamge/raw_caption": tf.FixedLenFeature(dtype=tf.string),
+          "iamge/raw_caption": tf.FixedLenSequenceFeature([], dtype=tf.string),
           # "image/caption_ids": tf.FixedLenSequenceFeature([21], dtype=tf.int64),
           # "image/caption_mask": tf.FixedLenSequenceFeature([21], dtype=tf.float32),
       })
@@ -88,11 +88,11 @@ def parse_eval_example(serialized):
   img = tf.decode_raw(encoded_image,tf.float32)
   img = tf.reshape(img,[100,2048])
 
-  bounding_box = context["image/bounding_box"]
+  bounding_box = context["iamge/bounding_box"]
   bounding_box = tf.decode_raw(bounding_box,tf.float32)
   bounding_box = tf.reshape(bounding_box,[100,4])
 
-  caption = sequence["image/raw_caption"]
+  caption = sequence["iamge/raw_caption"]
 
   return filename, img, caption, bounding_box
 

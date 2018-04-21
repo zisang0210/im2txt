@@ -60,7 +60,7 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
 
   for i in range(num_eval_batches):
     filenames, images, caps,box = sess.run([
-                model.filenames, model.images, model.captions
+                model.filenames, model.images, model.captions, model.bounding_box
                 ])
     print(filenames,images,caps,box)
   #   caption_data = model.beam_search(sess, vocab)

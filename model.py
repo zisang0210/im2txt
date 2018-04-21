@@ -74,19 +74,20 @@ class CaptionGenerator(BaseModel):
                 images_and_captions = []
                 for thread_id in range(self.config.num_preprocess_threads):
                     serialized_sequence_example = input_queue.dequeue()
-                    self.filenames, self.images, self.captions, self.bounding_box = \
+                    filenames, images, captions, bounding_box = \
                             input_ops.parse_eval_example(serialized_sequence_example)
-                    # images_and_captions.append([filename, img, caption])
+                    images_and_captions.append([filenames, images, captions,bounding_box])
 
-                # # Batch inputs.
-                # queue_capacity = (2 * self.config.num_preprocess_threads *
-                #                                     self.config.batch_size)
-                # self.filename, self.images, self.captions = tf.train.batch_join(
-                #                                           images_and_captions,
-                #                                           batch_size=self.config.batch_size,
-                #                                           capacity=queue_capacity,
-                #                                           shapes=[[100,2048],[21],[21]],
-                #                                           name="batch_generation")
+                # Batch inputs.
+                queue_capacity = (2 * self.config.num_preprocess_threads *
+                                                    self.config.batch_size)
+                self.filenames, self.images, self.captions, self.bounding_box = \
+                                    tf.train.batch_join(images_and_captions,
+                                                          batch_size=self.config.batch_size,
+                                                          capacity=queue_capacity,
+                                                          dynamic_pad=True,
+                                                          enqueue_many=False,
+                                                          name="batch_generation")
 
     def process_image(self, encoded_image, thread_id=0):
         """Decodes and processes an image string.
