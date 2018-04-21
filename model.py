@@ -66,7 +66,7 @@ class CaptionGenerator(BaseModel):
                 # Batch inputs.
                 queue_capacity = (4 * self.config.num_preprocess_threads *
                                                     self.config.batch_size)
-                images, captions, input_mask = (
+                self.images, self.captions, self.input_mask = (
                         input_ops.batch_with_dynamic_pad(images_and_captions,
                                                          batch_size=self.config.batch_size,
                                                          queue_capacity=queue_capacity))
@@ -74,25 +74,19 @@ class CaptionGenerator(BaseModel):
                 images_and_captions = []
                 for thread_id in range(self.config.num_preprocess_threads):
                     serialized_sequence_example = input_queue.dequeue()
-                    image, caption, mask = input_ops.parse_eval_example(
+                    self.filenames, self.images, self.captions = input_ops.parse_eval_example(
                             serialized_sequence_example)
-                    # image = self.process_image(image, thread_id=thread_id)
-                    images_and_captions.append([image, caption,mask])
+                    # images_and_captions.append([filename, img, caption])
 
-                # Batch inputs.
-                queue_capacity = (2 * self.config.num_preprocess_threads *
-                                                    self.config.batch_size)
-                images, captions, input_mask = tf.train.batch_join(
-                                                          images_and_captions,
-                                                          batch_size=self.config.batch_size,
-                                                          capacity=queue_capacity,
-                                                          shapes=[[100,2048],[21],[21]],
-                                                          name="batch_generation")
-
-        
-        self.images = images
-        self.captions = captions
-        self.input_mask = input_mask
+                # # Batch inputs.
+                # queue_capacity = (2 * self.config.num_preprocess_threads *
+                #                                     self.config.batch_size)
+                # self.filename, self.images, self.captions = tf.train.batch_join(
+                #                                           images_and_captions,
+                #                                           batch_size=self.config.batch_size,
+                #                                           capacity=queue_capacity,
+                #                                           shapes=[[100,2048],[21],[21]],
+                #                                           name="batch_generation")
 
     def process_image(self, encoded_image, thread_id=0):
         """Decodes and processes an image string.
@@ -595,10 +589,13 @@ class CaptionGenerator(BaseModel):
             print("bias attend")
             return self.bias_attend(reshaped_contexts,output)
         elif self.config.attention_mechanism == "rnn":
+            print('rnn')
             return self.fc1_attend(reshaped_contexts,output)        
         elif self.config.attention_mechanism == "fc1":
+            print('fc1')
             return self.fc1_attend(reshaped_contexts,output)
         else:
+            print('fc2')
             return self.fc2_attend(reshaped_contexts,output)
 
     def decode(self, expanded_output):
@@ -643,6 +640,7 @@ class CaptionGenerator(BaseModel):
 
         with tf.variable_scope('optimizer', reuse = tf.AUTO_REUSE):
             if config.optimizer == 'Adam':
+                print('Adam')
                 optimizer = tf.train.AdamOptimizer(
                     learning_rate = config.initial_learning_rate,
                     beta1 = config.beta1,
@@ -650,6 +648,7 @@ class CaptionGenerator(BaseModel):
                     epsilon = config.epsilon
                     )
             elif config.optimizer == 'RMSProp':
+                print('RMSProp')
                 optimizer = tf.train.RMSPropOptimizer(
                     learning_rate = config.initial_learning_rate,
                     decay = config.decay,
@@ -658,12 +657,14 @@ class CaptionGenerator(BaseModel):
                     epsilon = config.epsilon
                 )
             elif config.optimizer == 'Momentum':
+                print('Momentum')
                 optimizer = tf.train.MomentumOptimizer(
                     learning_rate = config.initial_learning_rate,
                     momentum = config.momentum,
                     use_nesterov = config.use_nesterov
                 )
             else:
+                print("SGD")
                 optimizer = tf.train.GradientDescentOptimizer(
                     learning_rate = config.initial_learning_rate
                 )

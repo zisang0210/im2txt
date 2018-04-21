@@ -73,8 +73,11 @@ python ./dataset/build_data.py \
 * **Training:**
 First make sure you are under the folder `code`, then setup various parameters in the file `config.py` and then run a command like this:
 ```shell
-python train.py --input_file_pattern='../data/flickr8k/train-?????-of-00032' \
-    -- number_of_steps=10000
+python train.py --input_file_pattern='../data/flickr8k/train-?????-of-00016' \
+    --number_of_steps=10000 \
+    --attention='bias'  
+    --optimizer='Adam'  
+    --train_dir='../output/model'
 ```
 To monitor the progress of training, run the following command:
 ```shell
