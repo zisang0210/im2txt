@@ -520,7 +520,7 @@ class CaptionGenerator(BaseModel):
                                 name = 'fc_b')
         logits = logits1 + logits2
         attend_bias = tf.get_variable("attend_bias",[self.config.batch_size,1],
-                                    initialize=tf.constant_initializer(0.0))
+                                    initializer=tf.constant_initializer(0.0))
         bias_logits = tf.concat([logits,attend_bias],axis=1,name='attend_bias_logits')
         bias_alpha = tf.nn.softmax(bias_logits)
         alpha = tf.slice(bias_alpha,[0,0],[self.config.batch_size,self.num_ctx])
