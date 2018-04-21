@@ -115,22 +115,22 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
   # eval_result = json.load(open(model.config.eval_result_file))
   scorer = COCOEvalCap()
   result = scorer.evaluate(eval_gt, results)
-  print(result)
+  # print(result)
   perplexity = sum_losses / sum_length
 
-  # def add_summary(tag, value):
-  #   summary = tf.Summary()
-  #   value = summary.value.add()
-  #   value.simple_value = value
-  #   value.tag = tag
-  #   summary_writer.add_summary(summary, global_step)
+  def add_summary(tag, value):
+    summary = tf.Summary()
+    value = summary.value.add()
+    value.simple_value = value
+    value.tag = tag
+    summary_writer.add_summary(summary, global_step)
 
-  # # Log perplexity to the FileWriter.
-  # add_summary("Perplexity", perplexity)
-  # for (k,v) in aDict.items():  
-  #   add_summary(k, v)    
-  # # Write the Events file to the eval directory.
-  # summary_writer.flush()
+  # Log perplexity to the FileWriter.
+  add_summary("Perplexity", perplexity)
+  for (k,v) in result.items():  
+    add_summary(k, v)    
+  # Write the Events file to the eval directory.
+  summary_writer.flush()
 
   eval_time = time.time() - start_time
   tf.logging.info("Finished evaluation at global step %d, Perplexity = %f (%.2g sec).",
