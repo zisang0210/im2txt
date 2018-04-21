@@ -75,8 +75,8 @@ First make sure you are under the folder `code`, then setup various parameters i
 ```shell
 python train.py --input_file_pattern='../data/flickr8k/train-?????-of-00016' \
     --number_of_steps=10000 \
-    --attention='bias'  
-    --optimizer='Adam'  
+    --attention='bias' \
+    --optimizer='Adam' \
     --train_dir='../output/model'
 ```
 To monitor the progress of training, run the following command:
@@ -87,7 +87,7 @@ tensorboard --logdir='../output/model'
 * **Evaluation:**
 To evaluate a trained model using the flickr30 data, run a command like this:
 ```shell
-python eval.py --input_file_pattern='../data/flickr8k/val-?????-of-00008' \
+python eval.py --input_file_pattern='../data/flickr8k1/val-?????-of-00008' \
     --checkpoint_dir='../output/model' \
     --eval_dir='../output/eval' \
     --min_global_step=10 \

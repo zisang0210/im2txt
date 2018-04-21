@@ -73,7 +73,7 @@ def parse_eval_example(serialized):
       serialized,
       context_features={
           "image/image_id": tf.FixedLenFeature([],dtype=tf.int64),
-          "image/filename": FixedLenFeature([], dtype=tf.string),
+          "image/filename": tf.FixedLenFeature([], dtype=tf.string),
           "image/data": tf.FixedLenFeature([], dtype=tf.string),
           "iamge/bounding_box":tf.FixedLenFeature([], dtype=tf.string),
       },
