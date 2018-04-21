@@ -289,6 +289,7 @@ def fix_length_list(lista, fixed_length):
 def _to_sequence_example(image, decoder, vocab):
   """Builds a SequenceExample proto for an image-caption pair.
 
+
   Args:
     image: An ImageMetadata object.
     decoder: An ImageDecoder object.

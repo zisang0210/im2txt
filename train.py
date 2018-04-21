@@ -7,15 +7,15 @@ from model import CaptionGenerator
 FLAGS = tf.app.flags.FLAGS
 
 
-tf.flags.DEFINE_string('input_file_pattern', '../data/flickr8k/train-?????-of-00064',
+tf.flags.DEFINE_string('input_file_pattern', '/home/hillyess/coco_tfrecord/train-?????-of-00256',
                        'Image feature extracted using faster rcnn and corresponding captions')
 tf.flags.DEFINE_string('train_dir', '../output/model',
                        'Model checkpoints and summary save here')
-tf.flags.DEFINE_string("optimizer", "Adam",
+tf.flags.DEFINE_string("optimizer", "SGD",
                         "Adam, RMSProp, Momentum or SGD")
-tf.flags.DEFINE_string("attention", "fc1",
+tf.flags.DEFINE_string("attention", "bias",
                         "fc1, fc2, rnn or bias")
-tf.flags.DEFINE_integer("number_of_steps", 10, 
+tf.flags.DEFINE_integer("number_of_steps", 20000,
                         "Number of training steps.")
 # tf.flags.DEFINE_boolean('train_cnn', False,
 #                         'Turn on to train both CNN and RNN. \
@@ -47,7 +47,11 @@ def main(argv):
     
         # Set up the Saver for saving and restoring model checkpoints.
         saver = tf.train.Saver(max_to_keep=config.max_checkpoints_to_keep)
-    
+
+    sess_config = tf.ConfigProto()
+
+    sess_config.gpu_options.allow_growth = True
+
     # Run training.
     tf.contrib.slim.learning.train(
         model.opt_op,
@@ -56,11 +60,13 @@ def main(argv):
         graph=g,
         global_step=model.global_step,
         number_of_steps=FLAGS.number_of_steps,
+
         summary_op=model.summary,
         save_summaries_secs=60,
         save_interval_secs=600,
         init_fn=None,
-        saver=saver)
+        saver=saver,
+        session_config=sess_config)
 
     # model = CaptionGenerator(config, mode="train")
     # model.build()
