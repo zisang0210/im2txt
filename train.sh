@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ATTENTION="fc1 fc2 bias bias2 bias_fc1 bias_fc2 rnn"
+ATTENTION="fc1 fc2 bias bias2 bias_fc1 bias_fc2"
 
 for att in $ATTENTION;
 do
