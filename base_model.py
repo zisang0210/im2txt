@@ -25,6 +25,7 @@ class BaseModel(object):
                                        name = 'global_step',
                                        trainable = False)
         self.reader = tf.TFRecordReader()
+        self.rnn_attend_state = None
         # self.build()
 
     def build(self):
