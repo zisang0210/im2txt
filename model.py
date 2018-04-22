@@ -27,17 +27,9 @@ class CaptionGenerator(BaseModel):
             self.input_mask (training and eval only)
         """
         if self.mode == "inference":
-            # In inference mode, images and inputs are fed via placeholders.
-            image_feed = tf.placeholder(dtype=tf.string, shape=[], name="image_feed")
-            input_feed = tf.placeholder(dtype=tf.int64,
-                                                                    shape=[None],  # batch_size
-                                                                    name="input_feed")
-            # Process image and insert batch dimensions.
-            images = tf.expand_dims(self.process_image(image_feed), 0)
-            input_seqs = tf.expand_dims(input_feed, 1)
-
-            # No target sequences or input mask in inference mode.
-            input_mask = None
+            # In inference mode, images are fed via placeholders.
+            self.images = tf.placeholder(dtype=tf.float32, shape=[100,2048], 
+                                                            name="image_feed")
 
         else:
             # Prefetch serialized SequenceExample protos.
@@ -300,16 +292,20 @@ class CaptionGenerator(BaseModel):
         else:
             contexts = tf.placeholder(
                 dtype = tf.float32,
-                shape = [config.batch_size, self.num_ctx, self.dim_ctx])
+                shape = [config.batch_size, self.num_ctx, self.dim_ctx],
+                name = 'contexts')
             last_memory = tf.placeholder(
                 dtype = tf.float32,
-                shape = [config.batch_size, config.num_lstm_units])
+                shape = [config.batch_size, config.num_lstm_units],
+                name = 'last_memory')
             last_output = tf.placeholder(
                 dtype = tf.float32,
-                shape = [config.batch_size, config.num_lstm_units])
+                shape = [config.batch_size, config.num_lstm_units],
+                name = 'last_output')
             last_word = tf.placeholder(
                 dtype = tf.int32,
-                shape = [config.batch_size])
+                shape = [config.batch_size],
+                name = 'last_word')
 
         # Setup the word embedding
         with tf.variable_scope("word_embedding"):
@@ -333,7 +329,7 @@ class CaptionGenerator(BaseModel):
 
         # Initialize the LSTM using the mean context
         with tf.variable_scope("initialize"):
-            context_mean = tf.reduce_mean(self.conv_feats, axis = 1)
+            context_mean = tf.reduce_mean(contexts, axis = 1)
             initial_memory, initial_output = self.initialize(context_mean)
             initial_state = initial_memory, initial_output
 
@@ -449,6 +445,7 @@ class CaptionGenerator(BaseModel):
             self.memory = memory
             self.output = output
             self.probs = probs
+            self.alpha = alpha
 
         print("RNN built.")
 

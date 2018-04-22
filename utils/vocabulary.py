@@ -78,5 +78,5 @@ class Vocabulary(object):
       return self.reverse_vocab[word_id]
 
   def get_sentence(self, word_idxs):
-    sentence = [self.id_to_word(w) for w in word_idxs[0:-1]]
+    sentence = [self.id_to_word(w) for w in word_idxs[1:-1]]
     return " ".join(sentence)

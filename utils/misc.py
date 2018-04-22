@@ -36,11 +36,12 @@ class ImageLoader(object):
         return images
 
 class CaptionData(object):
-    def __init__(self, sentence, memory, output, score):
+    def __init__(self, sentence, memory, output, score, alphas = None):
        self.sentence = sentence
        self.memory = memory
        self.output = output
        self.score = score
+       self.alphas = alphas
 
     def __cmp__(self, other):
         assert isinstance(other, CaptionData)

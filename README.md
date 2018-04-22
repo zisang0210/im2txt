@@ -94,6 +94,7 @@ python eval.py --input_file_pattern='../data/flickr8k/val-?????-of-00008' \
     --eval_dir='../output/eval' \
     --min_global_step=10 \
     --num_eval_examples=32 \
+    --vocab_file="../data/flickr8k/word_counts.txt" \
     --beam_size=3 \
     --save_eval_result_as_image \
     --eval_result_dir='../val/results/' \
@@ -102,20 +103,39 @@ python eval.py --input_file_pattern='../data/flickr8k/val-?????-of-00008' \
 The result will be shown in stdout and stored in eval_dir as tensorflow summary.
 
 * **Inference:**
-You can use the trained model to generate captions for any JPEG images! First get the frozen graph:
-```shell
-python freeze.py --model_folder='../output/model' \
-    --output_foler='../data/frozen_lstm.pb'
+A web interface was built using [Flask](http://flask.pocoo.org/). You can use the trained model to generate captions for any JPEG images!
+
+## Instructions
+
+1 - Install Flask
+
 ```
-and run a command like this:
+pip install Flask
+```
+2 - First get the frozen graph:
 ```shell
-python inference.py --beam_size=3\
+python export.py --model_folder='../output/model' \
+    --output_path='../data/frozen_lstm.pb' \
+    --attention='bias'
+```
+Run Flaskr
+```
+cd web
+python server.py --beam_size=3\
     --test_images_dir='test/images' \
     --test_result_dir='test/results' \
     --faster_rcnn_model_file='../data/frozen_faster_rcnn.pb' \
     --lstm_model_file='../data/frozen_lstm.pb' 
+    --vocab_file="../data/flickr8k/word_counts.txt" \
 ```
-The generated captions will be saved in the test_result_dir folder .
+
+3 - Picture test interface http://127.0.0.1:5000
+
+4 - Admin log in http://127.0.0.1:5000/admin to see more information
+
+Username: admin
+Password: 0000
+
 
 ### Results
 A pretrained model with default configuration can be downloaded [here](https://app.box.com/s/xuigzzaqfbpnf76t295h109ey9po5t8p). This model was trained solely on the COCO train2014 data. It achieves the following BLEU scores on the COCO val2014 data (with `beam size=3`):
