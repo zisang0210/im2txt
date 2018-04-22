@@ -12,6 +12,13 @@ from utils import vocabulary
 
 # from image_classify.classify_api import classify
 
+  
+faster_rcnn = FasterRcnnEncoder('../data/frozen_faster_rcnn.pb') 
+# build vocabulary file
+vocab = vocabulary.Vocabulary("../data/flickr8k/word_counts.txt")
+lstm = LSTMDecoder('../data/frozen_lstm.pb',vocab,max_caption_length=20)
+    
+
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 
 def allowed_file(filename):
@@ -105,7 +112,7 @@ def index():
 def upload():
   file = request.files['file']
   if file and allowed_file(file.filename):
-    caption='hello world hello world hello world hello.'
+    # caption='hello world hello world hello world hello.'
     # raw,caption, attention = generate_caption(file.read())
 
     # get saved folder
@@ -119,16 +126,26 @@ def upload():
     att_path = folder_name+filename+'1.jpeg'
     # save images
     file.save(raw_path)
-    file.save(att_path)
+    image_np = load_image_into_numpy_array(raw_path)
+    if image_np is not None:
+      box, feat = faster_rcnn.encode(image_np)
+      caption, attention = lstm.decode(feat)
+      lstm.show_attention(caption, attention,box, image_np, att_path)
 
-    # add record to sqlite
-    id = add_entry(caption, '/'+raw_path, '/'+att_path)
+      # add record to sqlite
+      id = add_entry(caption['caption'], '/'+raw_path, '/'+att_path)
 
-    return jsonify({
-      "code": 0,
-      "msg": "succeed",
-      "url": url_for('result', id=id)
-      })     
+      return jsonify({
+        "code": 0,
+        "msg": "succeed",
+        "url": url_for('result', id=id)
+        })   
+    else:
+      return jsonify({
+        "code": 0,
+        "msg": "fail",
+        "url": url_for('index')
+        })     
 
 @app.route('/result/<id>')
 def result(id):
