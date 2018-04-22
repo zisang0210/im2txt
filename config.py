@@ -37,7 +37,8 @@ class Config(object):
         # attention mechanism
         self.attention_mechanism = "fc2"       # "fc1", "fc2", "rnn" or "bias"
         self.dim_attend_layer = 512     # for "fc1" and "fc2" only
-        
+        self.dim_rnn_att_state = 256    # for rnn only
+
         # about the weight initialization and regularization
         self.fc_kernel_initializer_scale = 0.08
         self.fc_kernel_regularizer_scale = 1e-4

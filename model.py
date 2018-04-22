@@ -712,26 +712,29 @@ class CaptionGenerator(BaseModel):
         Attention weights alpha, has shape [batchsize 100].
         """
         print("rnn attend")
-        logits1 = self.nn.dense(contexts,
-                                units = 1,
-                                activation = None,
-                                use_bias = False,
-                                name = 'fc_a')
-        logits1 = tf.reshape(logits1, [-1, self.num_ctx])
-        logits2 = self.nn.dense(output,
-                                units = self.num_ctx,
-                                activation = None,
-                                use_bias = False,
-                                name = 'fc_b')
-        logits = logits1 + logits2
-        attend_bias = self.nn.dense(output,
-                                units = 1,
-                                activation = None,
-                                use_bias = False,
-                                name = 'attend_bias')
-        bias_logits = tf.concat([logits,attend_bias],axis=1,name='attend_bias_logits')
-        bias_alpha = tf.nn.softmax(bias_logits)
-        alpha = tf.slice(bias_alpha,[0,0],[self.config.batch_size,self.num_ctx])
+
+        if self.rnn_attend_state is None:
+            encode_contex = tf.reshape(contexts, [-1, self.num_ctx, self.dim_ctx])
+            encode_contex = tf.reduce_max(encode_contex, axis=1)
+            self.rnn_attend_state = self.nn.dense(encode_contex,
+                              units = self.config.dim_rnn_att_state,
+                              activation = tf.tanh,
+                              name = 'rnn_att_init_state')  
+        # update hidden state
+        self.rnn_attend_state = self.nn.dense(
+                              tf.concat([output,self.rnn_attend_state],1),
+                              units = self.config.dim_rnn_att_state,
+                              activation = tf.tanh,
+                              use_bias = True,
+                              name = 'rnn_att_update')
+
+        # calculate output
+        logits = self.nn.dense(self.rnn_attend_state,
+                              units = self.num_ctx,
+                              activation = None,
+                              use_bias = False,
+                              name = 'rnn_att_output')  
+        alpha = tf.nn.softmax(logits)
         return alpha
 
     def attend(self, contexts, output):
