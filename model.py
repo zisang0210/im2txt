@@ -676,7 +676,7 @@ class CaptionGenerator(BaseModel):
                               name = 'fc_1b')
 
         bias_temp1 = tf.reshape(temp1, [-1, self.num_ctx, self.config.dim_attend_layer])
-        bias_temp1 = tf.reduce_max(temp1, axis=1)
+        bias_temp1 = tf.reduce_max(bias_temp1, axis=1)
         attend_bias = bias_temp1 + temp2
         attend_bias = self.nn.dense(attend_bias,
                                units = 1,
@@ -700,6 +700,40 @@ class CaptionGenerator(BaseModel):
         alpha = tf.slice(bias_alpha,[0,0],[self.config.batch_size,self.num_ctx])
         return alpha
 
+    def rnn_attend(self, contexts, output):
+        """Use rnn to calculate attention weights. 
+
+        Args:
+        contexts: image feature of shape [batchsize 100 2048] after reshape, 
+                  become [batchsize*100 2048].
+        output: LSTM last generated hidden state.
+
+        Returns:
+        Attention weights alpha, has shape [batchsize 100].
+        """
+        print("rnn attend")
+        logits1 = self.nn.dense(contexts,
+                                units = 1,
+                                activation = None,
+                                use_bias = False,
+                                name = 'fc_a')
+        logits1 = tf.reshape(logits1, [-1, self.num_ctx])
+        logits2 = self.nn.dense(output,
+                                units = self.num_ctx,
+                                activation = None,
+                                use_bias = False,
+                                name = 'fc_b')
+        logits = logits1 + logits2
+        attend_bias = self.nn.dense(output,
+                                units = 1,
+                                activation = None,
+                                use_bias = False,
+                                name = 'attend_bias')
+        bias_logits = tf.concat([logits,attend_bias],axis=1,name='attend_bias_logits')
+        bias_alpha = tf.nn.softmax(bias_logits)
+        alpha = tf.slice(bias_alpha,[0,0],[self.config.batch_size,self.num_ctx])
+        return alpha
+
     def attend(self, contexts, output):
         """ Attention Mechanism. """
         ATTENTION_MAP = {
@@ -709,7 +743,7 @@ class CaptionGenerator(BaseModel):
             'bias2': self.bias2_attend,
             'bias_fc1': self.bias_fc1_attend,
             'bias_fc2': self.bias_fc2_attend,
-            'rnn': self.bias_fc2_attend,
+            'rnn': self.rnn_attend,
         }
         reshaped_contexts = tf.reshape(contexts, [-1, self.dim_ctx])
         reshaped_contexts = self.nn.dropout(reshaped_contexts)
