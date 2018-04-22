@@ -1,0 +1,112 @@
+{% extends "layout.html" %}
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='module/layui/css/layui.css') }}" >
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/rank.css') }}">
+  <style type="text/css">
+  div.caption { padding: 10px,0px,10px,0px; }
+  </style>
+{% endblock %}
+{% block content %}
+  <!-- begin content -->
+  <!-- login/logout -->
+  <div  class="layui-container" style="width: 950px">
+    <div class=metanav style="position:absolute;right:10px;top:-60px;font-size: 16px">
+      <a href="{{ url_for('logout') }}">log out</a>
+    </div>
+  </div>
+
+  <!-- stars -->
+  <div  class="layui-container" style="width: 950px">
+    <div class="rating" style="position:absolute;right:0px;top:-40px;">
+        <a href="/admin/"><button class="layui-btn layui-btn-sm" style="margin-right: 10px;{% if rank==0 %}display: none;{% endif %}">全部</button></a>
+        <input id="star5" name="rating" value="5" type="radio" {% if rank=='5' %}checked="checked"{% endif %}><label for="star5">5 stars</label>
+        <input id="star4" name="rating" value="4" type="radio" {% if rank=='4' %}checked="checked"{% endif %}><label for="star4">4 stars</label>
+        <input id="star3" name="rating" value="3" type="radio" {% if rank=='3' %}checked="checked"{% endif %}><label for="star3">3 stars</label>
+        <input id="star2" name="rating" value="2" type="radio" {% if rank=='2' %}checked="checked"{% endif %}><label for="star2">2 stars</label>
+        <input id="star1" name="rating" value="1" type="radio" {% if rank=='1' %}checked="checked"{% endif %}><label for="star1">1 star</label>
+    </div> 
+  </div>
+  <div>
+    <div id="site_content" class="layui-container" style="padding-right: 0px;height: 600px">  
+      <div id="layer-photos-demo" class="layer-photos-demo">
+        <div id="show_records" class="layui-row">
+
+        </div>
+      </div>
+      <div id="none_record" style="font-size: 24px;position:absolute;top: 40%;left: 27%;display: none;">Unbelievable. No records here so far</div>
+    </div>
+  </div>
+
+  <!-- pagination -->
+  <div  class="layui-container" style="width: 950px">
+    <div style="position:absolute;right:0px;top:0px;">
+      <div id="test1"></div>
+    </div> 
+  </div>
+{% endblock %}
+<!-- end content -->
+
+{% block javascript %}
+  <script src="{{ url_for('static', filename='module/layui/layui.js') }}" charset="utf-8"></script>
+  <script>
+    //records
+    var data = {{records|safe}};
+    if (data.length)
+    {
+      layui.use('layer', function(){
+        var layer = layui.layer;
+        layer.photos({
+        photos: '#layer-photos-demo'
+        ,anim: 5 //0-6的选择，指定弹出图片动画类型，默认随机（请注意，3.0之前的版本用shift参数）
+        });      
+      });   
+
+
+      layui.use('laypage', function(){
+        var laypage = layui.laypage;
+        
+        //执行一个laypage实例
+        laypage.render({
+          elem: 'test1' //注意，这里的 test1 是 ID，不用加 # 号
+          ,count: data.length //数据总数，从服务端得到
+          ,limit: 6 //每页条数
+          ,layout: ['page', 'count']
+          ,jump: function(obj, first){
+            document.getElementById('show_records').innerHTML = function(){
+              var arr = []
+              ,thisData = data.concat().splice(obj.curr*obj.limit - obj.limit, obj.limit);
+              layui.each(thisData, function(index, item){
+                arr.push('<div class="layui-col-xs12 layui-col-sm6 layui-col-md4" style="text-align: center;">\
+                <img width="220" height="220" layer-src="'+ item.att_path + '" layer-pid="" src="' + 
+                item.raw_path + '" alt="' + item.caption + '">\
+                <div class="caption" style="height:70px;margin-top:5px">\
+                  <div class="image-info">'+ item.caption +'</div>\
+                  <div class="image-info">uploaded at: '+ item.created_at + '</div>\
+                </div>\
+            </div>');
+              });
+              return arr.join('');
+            }();
+          }
+        });
+      });
+    }
+    else
+    {
+      document.getElementById('none_record').style.display="block";
+    }
+  
+  </script>
+  <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+  <script>
+
+  $(".rating").change(
+    function(n)
+    {
+      var t=$(n.target).attr("value");
+      window.location.href='/admin/?rank='+t
+    }
+    );
+  </script>
+{% endblock %}

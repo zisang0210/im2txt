@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/rank.css') }}">
+{% endblock %}
+{% block content %}
+  <!-- begin content -->
+  <div  id="site_content">
+    <h1 style="text-align:center">{{r.caption}}</h1>
+    <div style="height: 340px;text-align: center;">
+      <img width="320" height="320" src="{{ r.raw_path }}" alt="{{ r.raw_path }}" />
+    </div>
+    <div>
+
+      <fieldset id="feedback" style="display: block;" hidden="">
+          <legend id="feedbackRequested" style="color: white">How did I do?</legend>
+          <legend id="feedbackReceived" style="color: white;display:none" hidden="">Thank you for your feedback :)</legend>
+          <div class="rating" style="float:left">
+              <input id="star5" name="rating" value="5" type="radio"><label for="star5">5 stars</label>
+              <input id="star4" name="rating" value="4" type="radio"><label for="star4">4 stars</label>
+              <input id="star3" name="rating" value="3" type="radio"><label for="star3">3 stars</label>
+              <input id="star2" name="rating" value="2" type="radio"><label for="star2">2 stars</label>
+              <input id="star1" name="rating" value="1" type="radio"><label for="star1">1 star</label>
+          </div>
+      </fieldset>
+
+      <div id="tryAnother" style="display: block;">
+          <a href="/"><button id="tryAnotherButton" style="cursor:pointer">Try another</button></a>
+      </div>
+    </div>
+  </div>
+<!-- end content -->
+{% endblock %}
+
+{% block javascript %}
+  <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+  <script>
+  function onFeedback(n)
+  {
+    $.ajax({
+      url:"/rank/",
+      data:{id:{{r.id}},rank:n},
+    });
+    $("#feedbackRequested").hide();
+    $("#feedbackReceived").show();
+    setTimeout("window.location.href='/'",500)
+  }
+
+  $(".rating").change(
+    function(n)
+    {
+      var t=$(n.target).attr("value");
+      onFeedback(t)
+    }
+    );
+  </script>
+{% endblock %}

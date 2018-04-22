@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+{% block head %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ url_for('static', filename='module/layui/css/layui.css') }}"  media="all">
+  <style type="text/css">
+    a, a:hover { color: #C5E105;}
+    .layui-form-item .layui-input-inline{
+      float: left;
+      width: 320px;
+      height: 50px;
+      margin-right: 10px;
+    }
+  </style>
+{% endblock %}
+{% block content %}
+<!-- begin content -->
+<div style="background: #333;margin: 70px auto 110px auto;padding: 40px 20px 40px 30px;width: 500px">
+  <h1 style="text-align:center;margin-bottom: 20px">Admin</h1>
+  {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+  <form class="layui-form" action="{{ url_for('login') }}" method=post>
+    <div class="layui-form-item">
+      <label class="layui-form-label">Username</label>
+      <div class="layui-input-inline">
+        <input type="text" name="username" required  lay-verify="required" placeholder="admin" autocomplete="off" class="layui-input">
+      </div>
+    </div>
+    <div class="layui-form-item">
+      <label class="layui-form-label">Password</label>
+      <div class="layui-input-inline">
+        <input type="password" name="password" required lay-verify="required" placeholder="0000" autocomplete="off" class="layui-input">
+      </div>
+    </div>
+    <div class="layui-form-item">
+      <div class="layui-input-block">
+        <button class="layui-btn" lay-submit lay-filter="formLogin">Submit</button>
+        <button type="reset" class="layui-btn layui-btn-primary" style="margin-left: 120px ">Reset</button>
+      </div>
+    </div>  
+
+  </form>
+</div>
+<!-- end content -->
+
+  <script src="{{ url_for('static', filename='module/layui/layui.js') }}" charset="utf-8"></script>
+  <script>
+  //Demo
+  layui.use('form', function(){
+    var form = layui.form;
+    
+    //监听提交
+    form.on('submit(formLogin)', function(data){
+      // layer.msg(JSON.stringify(data.field));
+      return true;
+    });
+  });
+  </script>
+{% endblock %}
