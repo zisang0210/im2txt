@@ -14,7 +14,7 @@ tf.flags.DEFINE_string('train_dir', '../output/model',
 tf.flags.DEFINE_string("optimizer", "SGD",
                         "Adam, RMSProp, Momentum or SGD")
 tf.flags.DEFINE_string("attention", "bias",
-                        "fc1, fc2, rnn or bias")
+                        "fc1, fc2, bias, bias2, bias_fc1, bias_fc2, rnn")
 tf.flags.DEFINE_integer("number_of_steps", 20000,
                         "Number of training steps.")
 # tf.flags.DEFINE_boolean('train_cnn', False,
