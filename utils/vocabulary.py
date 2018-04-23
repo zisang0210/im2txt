@@ -20,7 +20,7 @@ from __future__ import print_function
 
 
 import tensorflow as tf
-
+import numpy as np
 
 class Vocabulary(object):
   """Vocabulary class for an image-to-text model."""
@@ -78,5 +78,7 @@ class Vocabulary(object):
       return self.reverse_vocab[word_id]
 
   def get_sentence(self, word_idxs):
-    sentence = [self.id_to_word(w) for w in word_idxs[1:-1]]
-    return " ".join(sentence)
+    words = [self.id_to_word(w) for w in word_idxs[1:-1]]
+    length = np.argmax(np.array(words)=='.') + 1
+    words = words[:length]
+    return " ".join(words)
