@@ -1,4 +1,5 @@
 import tensorflow as tf
+import cv2
 from PIL import Image
 import matplotlib as mpl
 mpl.use('Agg')
@@ -6,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
 import math
-from utils.misc import CaptionData, TopN
+from utils.misc import CaptionData, TopN, ImageLoader
 import skimage
 
 def load_image_into_numpy_array(filename):
@@ -225,6 +226,90 @@ class LSTMDecoder(GraphLoader):
     initial_memory, initial_output = self._sess.run(
       [self._initial_memory, self._initial_output],
       feed_dict={self._contexts: contexts})
+
+    def _inference_step_fn(last_word, last_memory, last_output):
+      return self._sess.run([self._memory, self._output, self._probs, self._alpha],
+                            feed_dict = {self._contexts: contexts,
+                                         self._last_word: last_word,
+                                         self._last_memory: last_memory,
+                                         self._last_output: last_output})
+    # generate caption for each picture
+    bs = BeamSearch(3,self._max_caption_length,self._vocab.start_id,self._vocab.end_id,1)
+    # Run beam search
+    result = bs.search(_inference_step_fn,initial_memory, initial_output)
+    caption = self.get_sentence(result[0])
+    attention = self.get_attention(result[0])
+    return caption, attention
+
+class ATT_NIC(GraphLoader):
+
+  def __init__(self, graph_path, vocab, max_caption_length):
+    self.image_loader = ImageLoader('utils/ilsvrc_2012_mean.npy')
+    self._vocab = vocab
+    self._max_caption_length = max_caption_length
+    self._graph = self.load_graph(graph_path)
+    with self.open_session(self._graph) as self._sess:
+      # inputs
+      self._images = self._graph.get_tensor_by_name('images:0')
+      self._contexts = self._graph.get_tensor_by_name('contexts:0')
+      self._last_word = self._graph.get_tensor_by_name('last_word:0')
+      self._last_memory = self._graph.get_tensor_by_name('last_memory:0')
+      self._last_output = self._graph.get_tensor_by_name('last_output:0')
+      # output
+      self._conv_feats = self._graph.get_tensor_by_name('conv_feats:0')
+      self._initial_memory = self._graph.get_tensor_by_name('initial_memory:0')
+      self._initial_output = self._graph.get_tensor_by_name('initial_output:0')
+      self._memory = self._graph.get_tensor_by_name('memory:0')
+      self._output = self._graph.get_tensor_by_name('output:0')
+      self._probs = self._graph.get_tensor_by_name('probs:0')
+      self._alpha = self._graph.get_tensor_by_name('alpha:0')
+
+  def get_sentence(self, result):
+    word_idxs = result.sentence
+    score = result.score
+    score = score/(len(word_idxs)-1)
+
+    caption = self._vocab.get_sentence(word_idxs)
+    results={'caption':caption,'score':score}
+    return results
+
+  def get_attention(self, result):
+
+    return result.alphas
+
+  def show_attention(self, caption, alphas, image_np, save_path):
+    # alphas = result.alphas
+    cap = caption['caption'].split()
+    plt_w = 4
+    plt_h = math.ceil((len(cap)+1)/plt_w)
+    im_width, im_height = image_np.shape[0:2]
+
+    plt.figure(figsize=(10,8)) 
+    plt.subplot(plt_h, plt_w, 1)
+    plt.imshow(image_np)
+    plt.axis('off')
+    # generate attention map for each word
+    for idx in range(len(cap)):
+      # assign weights for each region in the picture
+      alpha_image = cv2.resize(alphas[idx].reshape(14,14), (im_height,im_width))
+      plt.subplot(plt_h, plt_w, idx+2)
+      lab = cap[idx]
+      plt.text(0, 1, lab, backgroundcolor='white', color='black', fontsize=8)
+      plt.imshow(image_np)
+      plt.imshow(alpha_image, alpha=0.8)
+      plt.set_cmap(cm.Greys_r)
+      plt.axis('off')
+      plt.subplots_adjust(left=0.02, bottom=0.02, right=0.98, top=0.98, hspace=0.05, wspace=0.05)
+    
+    plt.savefig(save_path)
+
+  def decode(self, filename):
+    """Use beam search to generate the captions for a batch of images."""
+    # Feed in the images to get the contexts and the initial LSTM states
+    images = self.image_loader.load_images([filename])
+    contexts, initial_memory, initial_output = self._sess.run(
+        [self._conv_feats, self._initial_memory, self._initial_output],
+        feed_dict = {self._images: images})
 
     def _inference_step_fn(last_word, last_memory, last_output):
       return self._sess.run([self._memory, self._output, self._probs, self._alpha],

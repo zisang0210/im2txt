@@ -6,18 +6,33 @@ import json,os
 from datetime import *
 import time  
 import random  
-
+import tensorflow as tf
 from inference import *
 from utils import vocabulary
+from utils import att_nic_vocab
 
-# from image_classify.classify_api import classify
+FLAGS = tf.app.flags.FLAGS
 
-  
-faster_rcnn = FasterRcnnEncoder('../data/frozen_faster_rcnn.pb') 
-# build vocabulary file
-vocab = vocabulary.Vocabulary("../data/flickr8k/word_counts.txt")
-lstm = LSTMDecoder('../data/frozen_lstm.pb',vocab,max_caption_length=20)
-    
+
+tf.flags.DEFINE_string('mode', 'att-nic',
+                       'Can be att-nic or ours')
+tf.flags.DEFINE_string('vocab_path', '../output/vocabulary.csv',
+                       'Vocabulary file, be ../data/flickr8k/word_counts.txt for mode=ours')
+tf.flags.DEFINE_string("faster_rcnn_path", "../data/frozen_faster_rcnn.pb",
+                        "Faster r-cnn frozen graph")
+tf.flags.DEFINE_string("region_lstm_path", "../data/frozen_lstm.pb",
+                        "region attention based lstm forzen graph")
+tf.flags.DEFINE_string("att_nic_path", "../data/frozen_att_nic.pb",
+                        "region attention based lstm forzen graph")
+
+if FLAGS.mode == 'ours':  
+  faster_rcnn = FasterRcnnEncoder(FLAGS.faster_rcnn_path) 
+  # build vocabulary file
+  vocab = vocabulary.Vocabulary(FLAGS.vocab_path)
+  lstm = LSTMDecoder(FLAGS.region_lstm_path,vocab,max_caption_length=20)
+else:       
+  vocab = att_nic_vocab.Vocabulary(5000, FLAGS.vocab_path)
+  att_nic = ATT_NIC(FLAGS.att_nic_path,vocab,max_caption_length=20)
 
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 
@@ -128,10 +143,13 @@ def upload():
     file.save(raw_path)
     image_np = load_image_into_numpy_array(raw_path)
     if image_np is not None:
-      box, feat = faster_rcnn.encode(image_np)
-      caption, attention = lstm.decode(feat)
-      lstm.show_attention(caption, attention,box, image_np, att_path)
-
+      if FLAGS.mode =='ours':
+        box, feat = faster_rcnn.encode(image_np)
+        caption, attention = lstm.decode(feat)
+        lstm.show_attention(caption, attention,box, image_np, att_path)
+      else:
+        caption, attention = att_nic.decode(raw_path)
+        att_nic.show_attention(caption, attention, image_np, att_path)
       # add record to sqlite
       id = add_entry(caption['caption'], '/'+raw_path, '/'+att_path)
 
