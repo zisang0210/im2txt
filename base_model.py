@@ -20,7 +20,7 @@ class BaseModel(object):
         self.train_cnn = False
         # self.image_loader = ImageLoader('./utils/ilsvrc_2012_mean.npy')
         # self.image_shape = [224, 224, 3]
-        self.nn = NN(config)
+        self.nn = NN(config, mode)
         self.global_step = tf.Variable(0,
                                        name = 'global_step',
                                        trainable = False)
