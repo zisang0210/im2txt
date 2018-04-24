@@ -119,7 +119,7 @@ python export.py --model_folder='../output/model' \
 Run Flaskr
 ```
 python server.py --mode ours \
-    --vocab_path ../datflickr8k/word_counts.txt
+    --vocab_path ../data/flickr8k/word_counts.txt
 ```
 or run the following to see our results
 ```
@@ -138,14 +138,14 @@ Password: 0000
 
 ### Results
 This model was trained solely on the COCO train2014 data. It achieves the following BLEU scores on the COCO val2014 data (with `beam size=3`):
-* **BLEU-1 = 19.9%**
-* **BLEU-2 = 3.9%**
-* **BLEU-3 = 0%**
+* **BLEU-1 = 15.8%**
+* **BLEU-2 = 4.9%**
+* **BLEU-3 = 1.0%**
 * **BLEU-4 = 0%**
-* **METEOR = 3.9%**
-* **Rouge = 13.1%**
-* **CIDEr = 3.0%**
-* **Perplexity = 8.659839**
+* **METEOR = 4.4%**
+* **Rouge = 10.1%**
+* **CIDEr = 2.5%**
+* **Perplexity = 6.4**
 compared to Show, Attend and Tell, which have achieved the following performance:
 * **BLEU-1 = 70.3%**
 * **BLEU-2 = 53.6%**
