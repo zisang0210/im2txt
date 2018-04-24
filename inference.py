@@ -187,12 +187,12 @@ class LSTMDecoder(GraphLoader):
   def show_attention(self, caption,alphas, bounding_box, image_np, save_path):
     # alphas = result.alphas
     cap = caption['caption'].split()
-    plt_w = 6
+    plt_w = 4
     plt_h = math.ceil((len(cap)+1)/plt_w)
     im_width, im_height = image_np.shape[0:2]
 
     plt.figure() 
-    plt.subplot(plt_w, plt_h, 1)
+    plt.subplot(plt_h, plt_w, 1)
     plt.imshow(image_np)
     plt.axis('off')
     # generate attention map for each word
@@ -207,14 +207,14 @@ class LSTMDecoder(GraphLoader):
         
         mask[r_start:r_end,c_start:c_end] = alphas[idx][b]
 
-      plt.subplot(plt_w, plt_h, idx+2)
+      plt.subplot(plt_h, plt_w, idx+2)
       lab = cap[idx]
       plt.text(0, 1, lab, backgroundcolor='white', color='black', fontsize=8)
       plt.imshow(image_np)
       plt.imshow(mask, alpha=0.8)
       plt.set_cmap(cm.Greys_r)
       plt.axis('off')
-      plt.subplots_adjust(left=0, bottom=0.1, right=1, top=1, hspace=0.2, wspace=0)
+      plt.subplots_adjust(left=0.08, bottom=0.08, right=0.92, top=0.92, hspace=0.1, wspace=0.1)
     
     plt.savefig(save_path)
 
