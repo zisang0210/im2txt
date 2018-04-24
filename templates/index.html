@@ -91,6 +91,9 @@
     //拖拽上传
     upload.render({
       elem: '#test10'
+      ,before: function(obj){
+        layer.load();
+      }
       ,url: '/upload/'
       ,done: function(res){
         window.location.href=res.url
