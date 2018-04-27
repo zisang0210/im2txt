@@ -13,11 +13,11 @@ tf.flags.DEFINE_string('train_dir', '../output/model',
                        'Model checkpoints and summary save here')
 tf.flags.DEFINE_string("optimizer", "SGD",
                         "Adam, RMSProp, Momentum or SGD")
-tf.flags.DEFINE_string("initial_learning_rate", "0.001",
+tf.flags.DEFINE_float("initial_learning_rate", "0.001",
                         "")
-tf.flags.DEFINE_string("learning_rate_decay_factor", "0.1",
+tf.flags.DEFINE_float("learning_rate_decay_factor", "0.1",
                         "")
-tf.flags.DEFINE_string("num_steps_per_decay", "10000",
+tf.flags.DEFINE_integer("num_steps_per_decay", "10000",
                         "")
 tf.flags.DEFINE_string("attention", "bias",
                         "fc1, fc2, bias, bias2, bias_fc1, bias_fc2, rnn")
