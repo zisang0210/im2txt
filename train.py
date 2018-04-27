@@ -13,6 +13,12 @@ tf.flags.DEFINE_string('train_dir', '../output/model',
                        'Model checkpoints and summary save here')
 tf.flags.DEFINE_string("optimizer", "SGD",
                         "Adam, RMSProp, Momentum or SGD")
+tf.flags.DEFINE_string("initial_learning_rate", "0.001",
+                        "")
+tf.flags.DEFINE_string("learning_rate_decay_factor", "0.1",
+                        "")
+tf.flags.DEFINE_string("num_steps_per_decay", "10000",
+                        "")
 tf.flags.DEFINE_string("attention", "bias",
                         "fc1, fc2, bias, bias2, bias_fc1, bias_fc2, rnn")
 tf.flags.DEFINE_integer("number_of_steps", 20000,
@@ -29,6 +35,9 @@ def main(argv):
     config = Config()
     config.input_file_pattern = FLAGS.input_file_pattern
     config.optimizer = FLAGS.optimizer
+    config.initial_learning_rate = FLAGS.initial_learning_rate
+    config.learning_rate_decay_factor = FLAGS.learning_rate_decay_factor
+    config.num_steps_per_decay = FLAGS.num_steps_per_decay
     config.attention_mechanism = FLAGS.attention
     config.save_dir = FLAGS.train_dir
     
