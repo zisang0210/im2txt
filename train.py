@@ -19,6 +19,8 @@ tf.flags.DEFINE_float("learning_rate_decay_factor", "0.1",
                         "")
 tf.flags.DEFINE_integer("num_steps_per_decay", "10000",
                         "")
+tf.flags.DEFINE_float("momentum", "0.9",
+                        "")
 tf.flags.DEFINE_string("attention", "bias",
                         "fc1, fc2, bias, bias2, bias_fc1, bias_fc2, rnn")
 tf.flags.DEFINE_integer("number_of_steps", 20000,
@@ -38,6 +40,7 @@ def main(argv):
     config.initial_learning_rate = FLAGS.initial_learning_rate
     config.learning_rate_decay_factor = FLAGS.learning_rate_decay_factor
     config.num_steps_per_decay = FLAGS.num_steps_per_decay
+    config.momentum = FLAGS.momentum
     config.attention_mechanism = FLAGS.attention
     config.save_dir = FLAGS.train_dir
     
