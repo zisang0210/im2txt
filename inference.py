@@ -190,7 +190,7 @@ class LSTMDecoder(GraphLoader):
     cap = caption['caption'].split()
     plt_w = 4
     plt_h = math.ceil((len(cap)+1)/plt_w)
-    im_width, im_height = image_np.shape[0:2]
+    im_height,im_width = image_np.shape[0:2]
 
     plt.figure() 
     plt.subplot(plt_h, plt_w, 1)
@@ -198,15 +198,15 @@ class LSTMDecoder(GraphLoader):
     plt.axis('off')
     # generate attention map for each word
     for idx in range(len(cap)):
-      mask = np.zeros([im_width, im_height])
+      mask = np.zeros([im_height,im_width])
       # assign weights for each region in the picture
       for b in range(bounding_box.shape[0]):
-        r_start = int(bounding_box[b,0]*im_width)
-        c_start = int(bounding_box[b,1]*im_height)
-        r_end = int((bounding_box[b,0]+bounding_box[b,2])*im_width)
-        c_end = int((bounding_box[b,1]+bounding_box[b,3])*im_height)
+        h_start = int(bounding_box[b,0]*im_height)
+        w_start = int(bounding_box[b,1]*im_width)
+        h_end = int(bounding_box[b,2]*im_height)
+        w_end = int(bounding_box[b,3]*im_width)
         
-        mask[r_start:r_end,c_start:c_end] = alphas[idx][b]
+        mask[h_start:h_end,w_start:w_end] += alphas[idx][b]
 
       plt.subplot(plt_h, plt_w, idx+2)
       lab = cap[idx]
