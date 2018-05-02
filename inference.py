@@ -116,7 +116,7 @@ class BeamSearch(object):
       # Append each of these words to the current partial caption
       for w, s in words_and_scores:
         sentence = caption_data.sentence + [w]
-        score = caption_data.score - np.log2(s)
+        score = caption_data.score + np.log2(s)
         alphas = caption_data.alphas+ [alpha[k]]
         beam = CaptionData(sentence,
                    memory[k],
