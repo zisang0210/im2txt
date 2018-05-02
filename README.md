@@ -118,15 +118,15 @@ python export.py --model_folder='../output/model' \
 ```
 Run Flaskr
 ```
-python server.py --mode ours \
-    --vocab_path ../data/flickr8k/word_counts.txt
+python server.py --mode att-nic \
+    --vocab_path ../output/vocabulary.csv
 ```
 or run the following to see our results
 ```
-python server.py --mode att-nic \
+python server.py --mode ours \
     --faster_rcnn_model_file='../data/frozen_faster_rcnn.pb' \
-    --lstm_model_file='../data/frozen_lstm.pb' 
-    --vocab_file="../data/flickr8k/word_counts.txt" \
+    --lstm_model_file='../data/frozen_lstm.pb' \
+    --vocab_file="../data/flickr8k/word_counts.txt"
 ```
 3 - Picture test interface http://127.0.0.1:5000
 
