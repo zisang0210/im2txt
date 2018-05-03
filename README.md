@@ -138,20 +138,20 @@ Password: 0000
 
 ### Results
 This model was trained solely on the COCO train2014 data. It achieves the following BLEU scores on the COCO val2014 data (with `beam size=3`):
-* **BLEU-1 = 15.8%**
-* **BLEU-2 = 4.9%**
-* **BLEU-3 = 1.0%**
-* **BLEU-4 = 0%**
-* **METEOR = 4.4%**
-* **Rouge = 10.1%**
-* **CIDEr = 2.5%**
+* **BLEU-1 = 0.702**
+* **BLEU-2 = 0.534**
+* **BLEU-3 = 0.394**
+* **BLEU-4 = 0.291**
+* **METEOR = 0.234**
+* **Rouge = 0.516**
+* **CIDEr = 0.849**
 * **Perplexity = 6.4**
 compared to Show, Attend and Tell, which have achieved the following performance:
 * **BLEU-1 = 70.3%**
 * **BLEU-2 = 53.6%**
 * **BLEU-3 = 39.8%**
 * **BLEU-4 = 29.5%**
-there is still a long way to go.
+which acheved similar performance with fc2 attend, our method is of much less computation during attention vector generation.
 ### References
 * [Show, Attend and Tell: Neural Image Caption Generation with Visual Attention](https://arxiv.org/abs/1502.03044). Kelvin Xu, Jimmy Ba, Ryan Kiros, Kyunghyun Cho, Aaron Courville, Ruslan Salakhutdinov, Richard Zemel, Yoshua Bengio. ICML 2015.
 * [The original implementation in Theano](https://github.com/kelvinxu/arctic-captions)
