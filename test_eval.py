@@ -211,7 +211,7 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
                          model.last_output: last_output})
 
         words_and_scores = list(enumerate(scores[b]))
-        print(words_and_scores)
+        # print(words_and_scores)
         words_and_scores.sort(key=lambda x: -x[1])
         words_and_scores = words_and_scores[0]
         word = words_and_scores[0]
