@@ -284,7 +284,7 @@ class CaptionGenerator(BaseModel):
         """ Build the RNN. """
         print("Building the RNN...")
         config = self.config
-        # self.is_train=True
+        self.is_train=True
 
         # Setup the placeholders
         if self.is_train:
@@ -340,7 +340,7 @@ class CaptionGenerator(BaseModel):
 
         # Prepare to run
         predictions = []
-        if self.is_train:
+        if False:
             alphas = []
             cross_entropies = []
             predictions_correct = []
@@ -359,7 +359,7 @@ class CaptionGenerator(BaseModel):
                 alpha = self.attend(contexts, last_output)
                 context = tf.reduce_sum(contexts*tf.expand_dims(alpha, 2),
                                         axis = 1)
-                if self.is_train:
+                if False:
                     tiled_masks = tf.tile(tf.expand_dims(masks[:, idx], 1),
                                          [1, self.num_ctx])
                     masked_alpha = alpha * tiled_masks
@@ -387,7 +387,7 @@ class CaptionGenerator(BaseModel):
                 predictions.append(prediction)
 
             # Compute the loss for this step, if necessary
-            if self.is_train:
+            if False:
                 cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     labels = sentences[:, idx],
                     logits = logits)
@@ -410,7 +410,7 @@ class CaptionGenerator(BaseModel):
 
 
         # Compute the final loss, if necessary
-        if self.is_train:
+        if False:
             cross_entropies = tf.stack(cross_entropies, axis = 1)
             cross_entropy_loss = tf.reduce_sum(cross_entropies) \
                                  / tf.reduce_sum(masks)
@@ -432,7 +432,7 @@ class CaptionGenerator(BaseModel):
                        / tf.reduce_sum(masks)
 
         self.contexts = contexts
-        if self.is_train:
+        if False:
             self.sentences = sentences
             self.masks = masks
             self.total_loss = total_loss
