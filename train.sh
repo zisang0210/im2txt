@@ -22,3 +22,15 @@ python train.py --input_file_pattern="../data/flickr8k/train-?????-of-00016" \
   --learning_rate_decay_factor=0.1 \
   --num_steps_per_decay=40000 \
   --train_dir="../output/model/bias_Momentum_lr_0.0005_decay_0.2_40000"
+
+python eval.py --input_file_pattern='../data/flickr8k/val-?????-of-00008' \
+    --checkpoint_dir='../output/model/bias_Adam_60000' \
+    --attention='bias' \
+    --eval_dir='../output/eval/bias_Adam_60000' \
+    --min_global_step=10 \
+    --num_eval_examples=32 \
+    --vocab_file="../data/flickr8k/word_counts.txt" \
+    --beam_size=3 \
+    --save_eval_result_as_image \
+    --eval_result_dir='../val/results/bias_Adam_60000' \
+    --val_raw_image_dir='../flickr8k/Flicker8k_Dataset'
