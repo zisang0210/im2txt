@@ -200,8 +200,9 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
       last_word = vocabulary.start_id
       last_memory = initial_memory
       last_output = initial_output
-    
+
       for cap_len in range(14):
+        print(last_memory,last_memory.shape,last_memory.dtype)
         memory, output, scores = sess.run(
             [model.memory, model.output, model.probs],
             feed_dict = {model.contexts: contexts,
