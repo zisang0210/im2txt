@@ -170,56 +170,56 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
   eval_gt = {}
   for i in range(num_eval_batches):
     # current batch sample
-    acc,gts,res,mask, pred_cor = sess.run([
-                model.accuracy,
-                model.captions,
-                model.predictions,
-                model.masks,
-                model.predictions_correct
-                ])
-    gts=gts[:,1:]
-    print(acc)
-    print(gts)
-    print(res)
-    print(gts==res)
-    print(mask[:,1:])
-    print(pred_cor)
+    # acc,gts,res,mask, pred_cor = sess.run([
+    #             model.accuracy,
+    #             model.captions,
+    #             model.predictions,
+    #             model.masks,
+    #             model.predictions_correct
+    #             ])
+    # gts=gts[:,1:]
+    # print(acc)
+    # print(gts)
+    # print(res)
+    # print(gts==res)
+    # print(mask[:,1:])
+    # print(pred_cor)
     
     # print(type(gts),type(res))
     # print(gts.shape)
     # print(res.shape)
 
-    # contexts, initial_memory, initial_output = sess.run(
-    # [model.conv_feats, model.initial_memory, model.initial_output])
+    contexts, initial_memory, initial_output = sess.run(
+    [model.conv_feats, model.initial_memory, model.initial_output])
 
-    # for b in range(model.config.batch_size):
-    #   print(vocab.get_sentence(gts[b]))
-    #   print(vocab.get_sentence(res[b]))
-    #   print()
+    for b in range(model.config.batch_size):
+      # print(vocab.get_sentence(gts[b]))
+      # print(vocab.get_sentence(res[b]))
+      # print()
 
-    #   last_word = vocabulary.start_id
-    #   last_memory = initial_memory
-    #   last_output = initial_output
+      last_word = vocabulary.start_id
+      last_memory = initial_memory
+      last_output = initial_output
 
-    #   for cap_len in range(14):
-    #     print(last_memory,last_memory.shape,last_memory.dtype)
-    #     memory, output, scores = sess.run(
-    #         [model.memory, model.output, model.probs],
-    #         feed_dict = {model.contexts: contexts,
-    #                      model.last_word: last_word,
-    #                      model.last_memory: last_memory,
-    #                      model.last_output: last_output})
+      for cap_len in range(14):
+        print(last_memory,last_memory.shape,last_memory.dtype)
+        memory, output, scores = sess.run(
+            [model.memory, model.output, model.probs],
+            feed_dict = {model.contexts: contexts,
+                         model.last_word: last_word,
+                         model.last_memory: last_memory,
+                         model.last_output: last_output})
 
-    #     words_and_scores = list(enumerate(scores[b]))
-    #     print(words_and_scores)
-    #     words_and_scores.sort(key=lambda x: -x[1])
-    #     words_and_scores = words_and_scores[0]
-    #     word = words_and_scores[0]
-    #     print(word)
+        words_and_scores = list(enumerate(scores[b]))
+        print(words_and_scores)
+        words_and_scores.sort(key=lambda x: -x[1])
+        words_and_scores = words_and_scores[0]
+        word = words_and_scores[0]
+        print(word)
 
-    #     last_word = word
-    #     last_memory = memory
-    #     last_output = output
+        last_word = word
+        last_memory = memory
+        last_output = output
 
 def run_once(model,vocab, saver, summary_writer):
   """Evaluates the latest model checkpoint.
