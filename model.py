@@ -284,10 +284,10 @@ class CaptionGenerator(BaseModel):
         """ Build the RNN. """
         print("Building the RNN...")
         config = self.config
-        self.is_train=True
+        # self.is_train=True
 
         # Setup the placeholders
-        if False:
+        if self.is_train:
             contexts = self.conv_feats
             sentences = self.captions
             masks = self.input_mask
@@ -319,13 +319,13 @@ class CaptionGenerator(BaseModel):
                 shape = [config.vocabulary_size, config.dim_embedding],
                 initializer = self.nn.fc_kernel_initializer,
                 regularizer = self.nn.fc_kernel_regularizer,
-                trainable = self.is_train)
+                trainable = True)
 
         # Setup the LSTM
         lstm = tf.nn.rnn_cell.LSTMCell(
             config.num_lstm_units,
             initializer = self.nn.fc_kernel_initializer)
-        if self.is_train:
+        if True:
             lstm = tf.nn.rnn_cell.DropoutWrapper(
                 lstm,
                 input_keep_prob = 1.0-config.lstm_drop_rate,
@@ -340,7 +340,7 @@ class CaptionGenerator(BaseModel):
 
         # Prepare to run
         predictions = []
-        if False:
+        if self.is_train:
             alphas = []
             cross_entropies = []
             predictions_correct = []
@@ -359,7 +359,7 @@ class CaptionGenerator(BaseModel):
                 alpha = self.attend(contexts, last_output)
                 context = tf.reduce_sum(contexts*tf.expand_dims(alpha, 2),
                                         axis = 1)
-                if False:
+                if self.is_train:
                     tiled_masks = tf.tile(tf.expand_dims(masks[:, idx], 1),
                                          [1, self.num_ctx])
                     masked_alpha = alpha * tiled_masks
@@ -387,7 +387,7 @@ class CaptionGenerator(BaseModel):
                 predictions.append(prediction)
 
             # Compute the loss for this step, if necessary
-            if False:
+            if self.is_train:
                 cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     labels = sentences[:, idx],
                     logits = logits)
@@ -410,7 +410,7 @@ class CaptionGenerator(BaseModel):
 
 
         # Compute the final loss, if necessary
-        if False:
+        if self.is_train:
             cross_entropies = tf.stack(cross_entropies, axis = 1)
             cross_entropy_loss = tf.reduce_sum(cross_entropies) \
                                  / tf.reduce_sum(masks)
@@ -432,7 +432,7 @@ class CaptionGenerator(BaseModel):
                        / tf.reduce_sum(masks)
 
         self.contexts = contexts
-        if False:
+        if self.is_train:
             self.sentences = sentences
             self.masks = masks
             self.total_loss = total_loss
