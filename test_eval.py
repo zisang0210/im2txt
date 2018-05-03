@@ -4,6 +4,7 @@ import time
 import os
 import math
 import json
+import numpy as np
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -80,6 +81,7 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
                 model.captions,
                 model.predictions
                 ])
+    res = np.concat(res,axis=1)
     print(acc)
     print(gts)
     print(res)
