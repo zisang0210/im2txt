@@ -284,7 +284,7 @@ class CaptionGenerator(BaseModel):
         """ Build the RNN. """
         print("Building the RNN...")
         config = self.config
-        self.is_train=True
+        # self.is_train=True
 
         # Setup the placeholders
         if self.is_train:
