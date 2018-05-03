@@ -62,8 +62,9 @@ class CaptionGenerator(BaseModel):
                         tf.train.batch_join(images_and_captions,
                                                          batch_size=self.config.batch_size,
                                                          capacity=queue_capacity,
-                                                         dynamic_pad=True,
-                                                         enqueue_many=False))
+                                                         # dynamic_pad=True,
+                                                         shapes=[[100,2048],[21],[21]],
+                                                         enqueue_many=True))
             else:
                 images_and_captions = []
                 for thread_id in range(self.config.num_preprocess_threads):
