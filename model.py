@@ -61,7 +61,7 @@ class CaptionGenerator(BaseModel):
                 self.images, self.captions, self.input_mask = (
                         tf.train.batch_join(images_and_captions,
                                                          batch_size=self.config.batch_size,
-                                                         queue_capacity=queue_capacity,
+                                                         capacity=queue_capacity,
                                                          dynamic_pad=True,
                                                          enqueue_many=False))
             else:
