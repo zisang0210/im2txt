@@ -438,6 +438,7 @@ class CaptionGenerator(BaseModel):
             self.attention_loss = attention_loss
             self.reg_loss = reg_loss
             self.accuracy = accuracy
+            self.predictions = predictions
             self.attentions = attentions
         else:
             self.initial_memory = initial_memory

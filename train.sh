@@ -34,3 +34,19 @@ python eval.py --input_file_pattern='../data/flickr8k/val-?????-of-00008' \
     --save_eval_result_as_image \
     --eval_result_dir='../val/results/bias_Adam_60000' \
     --val_raw_image_dir='../flickr8k/Flicker8k_Dataset'
+
+DATASET_DIR="../flickr8k"
+OUTPUT_DIR="../data/flickr8"
+python ./dataset/build_data.py \
+  --graph_path "../data/frozen_inference_graph.pb" \
+  --dataset "flickr8k" \
+  --min_word_count 2 \
+  --image_dir "${DATASET_DIR}/Flicker8k_Dataset/" \
+  --text_path "${DATASET_DIR}/" \
+  --output_dir "${OUTPUT_DIR}" \
+  --train_shards 16\
+  --num_threads 16
+
+tar -cvf result.rar bias_Adam_60000/
+scp zshwu@202.114.96.180:/home/zshwu/data/val/results/result.rar ./
+tar -xvf result.rar
