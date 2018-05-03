@@ -347,7 +347,7 @@ class CaptionGenerator(BaseModel):
             num_steps = self.config.max_caption_length
             last_output = initial_output
             last_memory = initial_memory
-            last_word = sentences[:, 0,0]
+            last_word = sentences[:, 0]
         else:
             num_steps = 1
         last_state = last_memory, last_output

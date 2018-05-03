@@ -96,7 +96,7 @@ def parse_eval_example(serialized):
   raw_caption = sequence["iamge/raw_caption"]
   caption = sequence["image/caption_ids"]
   mask = sequence["image/caption_mask"]
-  return img, image_id, filename, raw_caption, caption, mask, bounding_box
+  return img, image_id, filename, raw_caption, caption[0], mask[0], bounding_box
 
 def prefetch_input_data(reader,
                         file_pattern,
