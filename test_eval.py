@@ -292,6 +292,7 @@ def run():
     config.input_file_pattern = FLAGS.input_file_pattern
     config.beam_size = FLAGS.beam_size
     config.attention_mechanism = FLAGS.attention
+    config.batch_size = 1
 
 
     # Build the model for evaluation.
