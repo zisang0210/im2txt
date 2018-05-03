@@ -145,51 +145,51 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
                   global_step, perplexity, eval_time)
 
 
-# def evaluate_model(sess, model, vocab, global_step, summary_writer):
-#   """Computes perplexity-per-word over the evaluation dataset.
+def evaluate_model(sess, model, vocab, global_step, summary_writer):
+  """Computes perplexity-per-word over the evaluation dataset.
 
-#   Summaries and perplexity-per-word are written out to the eval directory.
+  Summaries and perplexity-per-word are written out to the eval directory.
 
-#   Args:
-#     sess: Session object.
-#     model: Instance of ShowAndTellModel; the model to evaluate.
-#     global_step: Integer; global step of the model checkpoint.
-#     summary_writer: Instance of FileWriter.
-#     summary_op: Op for generating model summaries.
-#   """
+  Args:
+    sess: Session object.
+    model: Instance of ShowAndTellModel; the model to evaluate.
+    global_step: Integer; global step of the model checkpoint.
+    summary_writer: Instance of FileWriter.
+    summary_op: Op for generating model summaries.
+  """
 
-#   # Compute perplexity over the entire dataset.
-#   num_eval_batches = int(
-#       math.ceil(FLAGS.num_eval_examples / model.config.batch_size))
+  # Compute perplexity over the entire dataset.
+  num_eval_batches = int(
+      math.ceil(FLAGS.num_eval_examples / model.config.batch_size))
 
-#   start_time = time.time()
-#   # for perplexity calculation
-#   sum_losses = 0
-#   sum_length = 0
-#   results = {}
-#   eval_gt = {}
-#   for i in range(num_eval_batches):
-#     # current batch sample
-#     acc,gts,res,mask, pred_cor = sess.run([
-#                 model.accuracy,
-#                 model.captions,
-#                 model.predictions,
-#                 model.masks,
-#                 model.predictions_correct
-#                 ])
-#     gts=gts[:,1:]
-#     print(acc)
-#     print(gts)
-#     print(res)
-#     print(gts==res)
-#     print(pred_cor)
-#     print(mask[:,1:])
-#     # print(type(gts),type(res))
-#     # print(gts.shape)
-#     # print(res.shape)
-#     for b in range(model.config.batch_size):
-#       print(vocab.get_sentence(gts[b]))
-#       print(vocab.get_sentence(res[b]))
+  start_time = time.time()
+  # for perplexity calculation
+  sum_losses = 0
+  sum_length = 0
+  results = {}
+  eval_gt = {}
+  for i in range(num_eval_batches):
+    # current batch sample
+    acc,gts,res,mask, pred_cor = sess.run([
+                model.accuracy,
+                model.captions,
+                model.predictions,
+                model.masks,
+                model.predictions_correct
+                ])
+    gts=gts[:,1:]
+    print(acc)
+    print(gts)
+    print(res)
+    print(gts==res)
+    print(pred_cor)
+    print(mask[:,1:])
+    # print(type(gts),type(res))
+    # print(gts.shape)
+    # print(res.shape)
+    for b in range(model.config.batch_size):
+      print(vocab.get_sentence(gts[b]))
+      print(vocab.get_sentence(res[b]))
 
 def run_once(model,vocab, saver, summary_writer):
   """Evaluates the latest model checkpoint.

@@ -79,8 +79,8 @@ def parse_eval_example(serialized):
       },
       sequence_features={
           "iamge/raw_caption": tf.FixedLenSequenceFeature([], dtype=tf.string),
-          # "image/caption_ids": tf.FixedLenSequenceFeature([21], dtype=tf.int64),
-          # "image/caption_mask": tf.FixedLenSequenceFeature([21], dtype=tf.float32),
+          "image/caption_ids": tf.FixedLenSequenceFeature([21], dtype=tf.int64),
+          "image/caption_mask": tf.FixedLenSequenceFeature([21], dtype=tf.float32),
       })
   image_id = context['image/image_id']
   filename = context['image/filename']
@@ -93,9 +93,10 @@ def parse_eval_example(serialized):
   bounding_box = tf.decode_raw(bounding_box,tf.float32)
   bounding_box = tf.reshape(bounding_box,[100,4])
 
-  caption = sequence["iamge/raw_caption"]
-
-  return img, image_id, filename, caption, bounding_box
+  raw_caption = sequence["iamge/raw_caption"]
+  caption = sequence["image/caption_ids"]
+  mask = sequence["image/caption_mask"]
+  return img, image_id, filename, raw_caption, caption, mask, bounding_box
 
 def prefetch_input_data(reader,
                         file_pattern,

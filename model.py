@@ -59,24 +59,22 @@ class CaptionGenerator(BaseModel):
                 queue_capacity = (4 * self.config.num_preprocess_threads *
                                                     self.config.batch_size)
                 self.images, self.captions, self.input_mask = (
-                        tf.train.batch_join(images_and_captions,
+                        input_ops.batch_with_dynamic_pad(images_and_captions,
                                                          batch_size=self.config.batch_size,
-                                                         capacity=queue_capacity,
-                                                         # dynamic_pad=True,
-                                                         shapes=[[100,2048],[21],[21]],
-                                                         enqueue_many=True))
+                                                         queue_capacity=queue_capacity))
             else:
                 images_and_captions = []
                 for thread_id in range(self.config.num_preprocess_threads):
                     serialized_sequence_example = input_queue.dequeue()
-                    images, image_ids, filenames, captions, bounding_box = \
+                    images, image_ids, filenames, raw_captions, captions, masks, bounding_box = \
                             input_ops.parse_eval_example(serialized_sequence_example)
-                    images_and_captions.append([images, image_ids, filenames, captions,bounding_box])
+                    images_and_captions.append([images, image_ids, filenames, raw_captions, captions, masks,bounding_box])
 
                 # Batch inputs.
                 queue_capacity = (2 * self.config.num_preprocess_threads *
                                                     self.config.batch_size)
-                self.images,self.image_ids, self.filenames, self.captions, self.bounding_box \
+                self.images,self.image_ids, self.filenames, self.raw_captions, self.captions, \
+                self.input_mask, self.bounding_box \
                                   = tf.train.batch_join(images_and_captions,
                                                           batch_size=self.config.batch_size,
                                                           capacity=queue_capacity,
@@ -286,6 +284,7 @@ class CaptionGenerator(BaseModel):
         """ Build the RNN. """
         print("Building the RNN...")
         config = self.config
+        self.is_train=True
 
         # Setup the placeholders
         if self.is_train:
@@ -441,7 +440,7 @@ class CaptionGenerator(BaseModel):
             self.attention_loss = attention_loss
             self.reg_loss = reg_loss
             self.accuracy = accuracy
-            self.predictions = tf.stack(predictions, axis = 1)
+            self.predictions = tf.stack(predictions,axis=1)
             self.predictions_correct = predictions_correct
             self.attentions = attentions
         else:
