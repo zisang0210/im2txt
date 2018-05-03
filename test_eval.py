@@ -205,8 +205,8 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
       last_output = initial_output
 
       for cap_len in range(14):
-        memory, output, scores, gt = sess.run(
-            [model.memory, model.output, model.probs,model.gt],
+        memory, output, scores = sess.run(
+            [model.memory, model.output, model.probs],
             feed_dict = {model.contexts: contexts,
                          model.last_word: last_word,
                          model.last_memory: last_memory,
@@ -217,9 +217,9 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
         words_and_scores.sort(key=lambda x: -x[1])
         words_and_scores = words_and_scores[0]
         word = words_and_scores[0]
-        print(vocab.id_to_word(word),word,gt[b])
+        print(vocab.id_to_word(word),word,gts[b,cap_len])
 
-        last_word = word * np.ones((model.config.batch_size), np.int32)
+        last_word = word* np.ones((model.config.batch_size), np.int32)
         last_memory = memory
         last_output = output
 
