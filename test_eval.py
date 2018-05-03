@@ -81,7 +81,7 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
                 model.captions,
                 model.predictions
                 ])
-    res = np.concat(res,axis=1)
+    res = np.concatenate(res,axis=1)
     print(acc)
     print(gts)
     print(res)
