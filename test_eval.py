@@ -75,13 +75,12 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
   eval_gt = {}
   for i in range(num_eval_batches):
     # current batch sample
-    # filenames, image_ids, caps,box = sess.run([
-    #             model.filenames, model.image_ids, model.captions, model.bounding_box
-    #             ])
+    filenames, image_ids, caps,box = sess.run([
+                model.filenames, model.image_ids, model.captions, model.bounding_box
+                ])
     # print(caps,type(caps),caps.dtype,caps.shape)
     # print(box,type(box),box.dtype)
     # generate batch captions
-    caps = sess.run([model.captions])
     caption_data = model.beam_search(sess, vocab)
     
     # generate caption in order to caluculate bleu-1 to blue-4 and cider etc
@@ -91,12 +90,13 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
         sum_losses += score
         sum_length += len(word_idxs)
         caption = vocab.get_sentence(word_idxs)
-        # results[image_ids[l]] = [{'caption':caption}]
-        # eval_gt[image_ids[l]] = [{'caption':byte_str.decode()} for byte_str in caps[l]]
+        results[image_ids[l]] = [{'caption':caption}]
+        eval_gt[image_ids[l]] = [{'caption':byte_str.decode()} for byte_str in caps[l]]
         print(caption)
-        print(vocab.get_sentence(caps[l]))
         print()
-
+        print([byte_str.decode() for byte_str in caps[l]])
+        print()
+        print()
         # # Save the result in an image file, if requested
         # if FLAGS.save_eval_result_as_image:
         #     image_file = filenames[l].decode()
