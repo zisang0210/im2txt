@@ -265,7 +265,7 @@ def run():
 
 
     # Build the model for evaluation.
-    model = CaptionGenerator(config, mode="train") 
+    model = CaptionGenerator(config, mode="eval") 
     model.build()
 
     # Create the Saver to restore model Variables.
