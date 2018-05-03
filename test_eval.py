@@ -94,7 +94,7 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
         # results[image_ids[l]] = [{'caption':caption}]
         # eval_gt[image_ids[l]] = [{'caption':byte_str.decode()} for byte_str in caps[l]]
         print(caption)
-        print(vocab.get_sentence(caps[l])
+        print(vocab.get_sentence(caps[l]))
         print()
 
         # # Save the result in an image file, if requested
