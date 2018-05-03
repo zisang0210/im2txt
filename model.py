@@ -66,15 +66,14 @@ class CaptionGenerator(BaseModel):
                 images_and_captions = []
                 for thread_id in range(self.config.num_preprocess_threads):
                     serialized_sequence_example = input_queue.dequeue()
-                    images, image_ids, filenames, raw_captions, captions, masks, bounding_box = \
+                    images, image_ids, filenames, captions, bounding_box = \
                             input_ops.parse_eval_example(serialized_sequence_example)
-                    images_and_captions.append([images, image_ids, filenames, raw_captions, captions, masks,bounding_box])
+                    images_and_captions.append([images, image_ids, filenames, captions,bounding_box])
 
                 # Batch inputs.
                 queue_capacity = (2 * self.config.num_preprocess_threads *
                                                     self.config.batch_size)
-                self.images,self.image_ids, self.filenames, self.raw_captions, self.captions, \
-                self.input_mask, self.bounding_box \
+                self.images,self.image_ids, self.filenames, self.captions, self.bounding_box \
                                   = tf.train.batch_join(images_and_captions,
                                                           batch_size=self.config.batch_size,
                                                           capacity=queue_capacity,
@@ -284,33 +283,32 @@ class CaptionGenerator(BaseModel):
         """ Build the RNN. """
         print("Building the RNN...")
         config = self.config
-        self.is_train=True
 
-    # Setup the placeholders
-    # if self.is_train:
-        contexts = self.conv_feats
-        sentences = self.captions
-        masks = self.input_mask
-    # else:
-    #     if self.mode =='eval':
-    #         contexts = self.conv_feats
-    #     else:
-    #         contexts = tf.placeholder(
-    #             dtype = tf.float32,
-    #             shape = [config.batch_size, self.num_ctx, self.dim_ctx],
-    #             name = 'contexts')
-        last_memory = tf.placeholder(
-            dtype = tf.float32,
-            shape = [config.batch_size, config.num_lstm_units],
-            name = 'last_memory')
-        last_output = tf.placeholder(
-            dtype = tf.float32,
-            shape = [config.batch_size, config.num_lstm_units],
-            name = 'last_output')
-        last_word = tf.placeholder(
-            dtype = tf.int32,
-            shape = [config.batch_size],
-            name = 'last_word')
+        # Setup the placeholders
+        if self.is_train:
+            contexts = self.conv_feats
+            sentences = self.captions
+            masks = self.input_mask
+        else:
+            if self.mode =='eval':
+                contexts = self.conv_feats
+            else:
+                contexts = tf.placeholder(
+                    dtype = tf.float32,
+                    shape = [config.batch_size, self.num_ctx, self.dim_ctx],
+                    name = 'contexts')
+            last_memory = tf.placeholder(
+                dtype = tf.float32,
+                shape = [config.batch_size, config.num_lstm_units],
+                name = 'last_memory')
+            last_output = tf.placeholder(
+                dtype = tf.float32,
+                shape = [config.batch_size, config.num_lstm_units],
+                name = 'last_output')
+            last_word = tf.placeholder(
+                dtype = tf.int32,
+                shape = [config.batch_size],
+                name = 'last_word')
 
         # Setup the word embedding
         with tf.variable_scope("word_embedding"):
@@ -344,10 +342,10 @@ class CaptionGenerator(BaseModel):
             alphas = []
             cross_entropies = []
             predictions_correct = []
-            num_steps = 1
-            # last_output = initial_output
-            # last_memory = initial_memory
-            # last_word = sentences[:, 0]
+            num_steps = self.config.max_caption_length
+            last_output = initial_output
+            last_memory = initial_memory
+            last_word = sentences[:, 0]
         else:
             num_steps = 1
         last_state = last_memory, last_output
@@ -401,11 +399,10 @@ class CaptionGenerator(BaseModel):
                     tf.cast(tf.zeros_like(prediction), tf.float32))
                 predictions_correct.append(prediction_correct)
 
-                # last_output = output
-                # last_memory = memory
-                # last_state = state
-                # last_word = sentences[:, idx]
-                self.gt = sentences[:, idx]
+                last_output = output
+                last_memory = memory
+                last_state = state
+                last_word = sentences[:, idx]
 
             tf.get_variable_scope().reuse_variables()
 
@@ -433,27 +430,25 @@ class CaptionGenerator(BaseModel):
                        / tf.reduce_sum(masks)
 
         self.contexts = contexts
-    # if self.is_train:
-        self.sentences = sentences
-        self.masks = masks
-        self.total_loss = total_loss
-        self.cross_entropy_loss = cross_entropy_loss
-        self.attention_loss = attention_loss
-        self.reg_loss = reg_loss
-        self.accuracy = accuracy
-        self.predictions = tf.stack(predictions,axis=1)
-        self.predictions_correct = predictions_correct
-        self.attentions = attentions
-    # else:
-        self.initial_memory = initial_memory
-        self.initial_output = initial_output
-        self.last_memory = last_memory
-        self.last_output = last_output
-        self.last_word = last_word
-        self.memory = memory
-        self.output = output
-        self.probs = probs
-        self.alpha = alpha
+        if self.is_train:
+            self.sentences = sentences
+            self.masks = masks
+            self.total_loss = total_loss
+            self.cross_entropy_loss = cross_entropy_loss
+            self.attention_loss = attention_loss
+            self.reg_loss = reg_loss
+            self.accuracy = accuracy
+            self.attentions = attentions
+        else:
+            self.initial_memory = initial_memory
+            self.initial_output = initial_output
+            self.last_memory = last_memory
+            self.last_output = last_output
+            self.last_word = last_word
+            self.memory = memory
+            self.output = output
+            self.probs = probs
+            self.alpha = alpha
 
         print("RNN built.")
 
