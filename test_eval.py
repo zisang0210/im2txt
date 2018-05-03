@@ -92,7 +92,7 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
     # print(type(gts),type(res))
     # print(gts.shape)
     # print(res.shape)
-    for b in model.config.batch_size:
+    for b in range(model.config.batch_size):
       print(vocab.get_sentence(gts[b]))
       print(vocab.get_sentence(res[b]))
 
