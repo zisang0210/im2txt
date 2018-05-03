@@ -59,9 +59,11 @@ class CaptionGenerator(BaseModel):
                 queue_capacity = (4 * self.config.num_preprocess_threads *
                                                     self.config.batch_size)
                 self.images, self.captions, self.input_mask = (
-                        input_ops.batch_with_dynamic_pad(images_and_captions,
+                        tf.train.batch_join(images_and_captions,
                                                          batch_size=self.config.batch_size,
-                                                         queue_capacity=queue_capacity))
+                                                         queue_capacity=queue_capacity,
+                                                         dynamic_pad=True,
+                                                         enqueue_many=False))
             else:
                 images_and_captions = []
                 for thread_id in range(self.config.num_preprocess_threads):
