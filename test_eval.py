@@ -190,6 +190,7 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
     for b in range(model.config.batch_size):
       print(vocab.get_sentence(gts[b]))
       print(vocab.get_sentence(res[b]))
+      print()
 
 def run_once(model,vocab, saver, summary_writer):
   """Evaluates the latest model checkpoint.
