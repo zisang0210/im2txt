@@ -439,6 +439,7 @@ class CaptionGenerator(BaseModel):
             self.reg_loss = reg_loss
             self.accuracy = accuracy
             self.predictions = tf.stack(predictions, axis = 1)
+            self.predictions_correct = predictions_correct
             self.attentions = attentions
         else:
             self.initial_memory = initial_memory

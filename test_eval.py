@@ -75,21 +75,27 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
   eval_gt = {}
   for i in range(num_eval_batches):
     # current batch sample
-    acc,gts,res = sess.run([
+    acc,gts,res,mask, pred_cor = sess.run([
                 model.accuracy,
                 model.captions,
-                model.predictions
+                model.predictions,
+                model.masks,
+                model.predictions_correct
                 ])
     gts=gts[:,1:]
     print(acc)
-    # print(gts)
-    # print(res)
-    # print(gts==res)
+    print(gts)
+    print(res)
+    print(gts==res)
+    print(pred_cor)
+    print(mask[:,1:])
     # print(type(gts),type(res))
     # print(gts.shape)
     # print(res.shape)
-    print(vocab.get_sentence(gts[i]))
-    print(vocab.get_sentence(res[i]))
+    for b in model.config.batch_size:
+      print(vocab.get_sentence(gts[b]))
+      print(vocab.get_sentence(res[b]))
+
     # generate batch captions
     # caption_data = model.beam_search(sess, vocab)
     
