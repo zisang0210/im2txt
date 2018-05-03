@@ -13,7 +13,7 @@ class CaptionGenerator(BaseModel):
         self.build_inputs()
         self.build_cnn()
         self.build_rnn()
-        if False:
+        if self.is_train:
             self.build_optimizer()
             self.build_summary()
 
@@ -286,31 +286,31 @@ class CaptionGenerator(BaseModel):
         config = self.config
         self.is_train=True
 
-        # Setup the placeholders
-        if False:
-            contexts = self.conv_feats
-            sentences = self.captions
-            masks = self.input_mask
-        else:
-            if self.mode =='eval':
-                contexts = self.conv_feats
-            else:
-                contexts = tf.placeholder(
-                    dtype = tf.float32,
-                    shape = [config.batch_size, self.num_ctx, self.dim_ctx],
-                    name = 'contexts')
-            last_memory = tf.placeholder(
-                dtype = tf.float32,
-                shape = [config.batch_size, config.num_lstm_units],
-                name = 'last_memory')
-            last_output = tf.placeholder(
-                dtype = tf.float32,
-                shape = [config.batch_size, config.num_lstm_units],
-                name = 'last_output')
-            last_word = tf.placeholder(
-                dtype = tf.int32,
-                shape = [config.batch_size],
-                name = 'last_word')
+    # Setup the placeholders
+    # if False:
+        contexts = self.conv_feats
+        sentences = self.captions
+        masks = self.input_mask
+    # else:
+    #     if self.mode =='eval':
+    #         contexts = self.conv_feats
+    #     else:
+    #         contexts = tf.placeholder(
+    #             dtype = tf.float32,
+    #             shape = [config.batch_size, self.num_ctx, self.dim_ctx],
+    #             name = 'contexts')
+        last_memory = tf.placeholder(
+            dtype = tf.float32,
+            shape = [config.batch_size, config.num_lstm_units],
+            name = 'last_memory')
+        last_output = tf.placeholder(
+            dtype = tf.float32,
+            shape = [config.batch_size, config.num_lstm_units],
+            name = 'last_output')
+        last_word = tf.placeholder(
+            dtype = tf.int32,
+            shape = [config.batch_size],
+            name = 'last_word')
 
         # Setup the word embedding
         with tf.variable_scope("word_embedding"):
@@ -344,7 +344,7 @@ class CaptionGenerator(BaseModel):
             alphas = []
             cross_entropies = []
             predictions_correct = []
-            num_steps = self.config.max_caption_length
+            num_steps = 1
             last_output = initial_output
             last_memory = initial_memory
             last_word = sentences[:, 0]
@@ -359,7 +359,7 @@ class CaptionGenerator(BaseModel):
                 alpha = self.attend(contexts, last_output)
                 context = tf.reduce_sum(contexts*tf.expand_dims(alpha, 2),
                                         axis = 1)
-                if False:
+                if self.is_train:
                     tiled_masks = tf.tile(tf.expand_dims(masks[:, idx], 1),
                                          [1, self.num_ctx])
                     masked_alpha = alpha * tiled_masks
@@ -387,7 +387,7 @@ class CaptionGenerator(BaseModel):
                 predictions.append(prediction)
 
             # Compute the loss for this step, if necessary
-            if False:
+            if self.is_train:
                 cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     labels = sentences[:, idx],
                     logits = logits)
@@ -410,7 +410,7 @@ class CaptionGenerator(BaseModel):
 
 
         # Compute the final loss, if necessary
-        if False:
+        if self.is_train:
             cross_entropies = tf.stack(cross_entropies, axis = 1)
             cross_entropy_loss = tf.reduce_sum(cross_entropies) \
                                  / tf.reduce_sum(masks)
@@ -432,7 +432,7 @@ class CaptionGenerator(BaseModel):
                        / tf.reduce_sum(masks)
 
         self.contexts = contexts
-        if False:
+        if self.is_train:
             self.sentences = sentences
             self.masks = masks
             self.total_loss = total_loss
@@ -443,7 +443,7 @@ class CaptionGenerator(BaseModel):
             self.predictions = tf.stack(predictions,axis=1)
             self.predictions_correct = predictions_correct
             self.attentions = attentions
-        else:
+        # else:
             self.initial_memory = initial_memory
             self.initial_output = initial_output
             self.last_memory = last_memory
