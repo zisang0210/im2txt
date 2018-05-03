@@ -287,7 +287,7 @@ class CaptionGenerator(BaseModel):
         self.is_train=True
 
     # Setup the placeholders
-    # if False:
+    # if self.is_train:
         contexts = self.conv_feats
         sentences = self.captions
         masks = self.input_mask
@@ -340,11 +340,11 @@ class CaptionGenerator(BaseModel):
 
         # Prepare to run
         predictions = []
-        if False:
+        if self.is_train:
             alphas = []
             cross_entropies = []
             predictions_correct = []
-            num_steps = 1
+            num_steps = self.config.max_caption_length
             last_output = initial_output
             last_memory = initial_memory
             last_word = sentences[:, 0]
@@ -432,27 +432,27 @@ class CaptionGenerator(BaseModel):
                        / tf.reduce_sum(masks)
 
         self.contexts = contexts
-        if self.is_train:
-            self.sentences = sentences
-            self.masks = masks
-            self.total_loss = total_loss
-            self.cross_entropy_loss = cross_entropy_loss
-            self.attention_loss = attention_loss
-            self.reg_loss = reg_loss
-            self.accuracy = accuracy
-            self.predictions = tf.stack(predictions,axis=1)
-            self.predictions_correct = predictions_correct
-            self.attentions = attentions
-        # else:
-            self.initial_memory = initial_memory
-            self.initial_output = initial_output
-            self.last_memory = last_memory
-            self.last_output = last_output
-            self.last_word = last_word
-            self.memory = memory
-            self.output = output
-            self.probs = probs
-            self.alpha = alpha
+    # if self.is_train:
+        self.sentences = sentences
+        self.masks = masks
+        self.total_loss = total_loss
+        self.cross_entropy_loss = cross_entropy_loss
+        self.attention_loss = attention_loss
+        self.reg_loss = reg_loss
+        self.accuracy = accuracy
+        self.predictions = tf.stack(predictions,axis=1)
+        self.predictions_correct = predictions_correct
+        self.attentions = attentions
+    # else:
+        self.initial_memory = initial_memory
+        self.initial_output = initial_output
+        self.last_memory = last_memory
+        self.last_output = last_output
+        self.last_word = last_word
+        self.memory = memory
+        self.output = output
+        self.probs = probs
+        self.alpha = alpha
 
         print("RNN built.")
 

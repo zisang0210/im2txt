@@ -50,101 +50,6 @@ tf.flags.DEFINE_string("val_raw_image_dir", None,
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
-def evaluate_model(sess, model, vocab, global_step, summary_writer):
-  """Computes perplexity-per-word over the evaluation dataset.
-
-  Summaries and perplexity-per-word are written out to the eval directory.
-
-  Args:
-    sess: Session object.
-    model: Instance of ShowAndTellModel; the model to evaluate.
-    global_step: Integer; global step of the model checkpoint.
-    summary_writer: Instance of FileWriter.
-    summary_op: Op for generating model summaries.
-  """
-
-  # Compute perplexity over the entire dataset.
-  num_eval_batches = int(
-      math.ceil(FLAGS.num_eval_examples / model.config.batch_size))
-
-  start_time = time.time()
-  # for perplexity calculation
-  sum_losses = 0
-  sum_length = 0
-  results = {}
-  eval_gt = {}
-  for i in range(num_eval_batches):
-    # current batch sample
-    filenames, image_ids, caps,box = sess.run([
-                model.filenames, model.image_ids, model.raw_captions, model.bounding_box
-                ])
-    # print(caps,type(caps),caps.dtype,caps.shape)
-    # print(box,type(box),box.dtype)
-    # generate batch captions
-    caption_data = model.beam_search(sess, vocab)
-    
-    # generate caption in order to caluculate bleu-1 to blue-4 and cider etc
-    for l in range(len(caption_data)):
-        word_idxs = caption_data[l][0].sentence
-        score = caption_data[l][0].score
-        sum_losses += score
-        sum_length += len(word_idxs)
-        caption = vocab.get_sentence(word_idxs)
-        results[image_ids[l]] = [{'caption':caption}]
-        eval_gt[image_ids[l]] = [{'caption':byte_str.decode()} for byte_str in caps[l]]
-        print(caption)
-        print()
-        print([byte_str.decode() for byte_str in caps[l]])
-        print()
-        print()
-        # # Save the result in an image file, if requested
-        # if FLAGS.save_eval_result_as_image:
-        #     image_file = filenames[l].decode()
-        #     image_name = image_file.split(os.sep)[-1]
-        #     img = plt.imread(os.path.join(FLAGS.val_raw_image_dir,image_name))
-
-        #     plt.imshow(img)
-        #     plt.axis('off')
-        #     plt.title(caption)
-        #     plt.savefig(os.path.join(FLAGS.eval_result_dir,
-        #                     os.path.splitext(image_name)[0]+'_result.jpg'))
-
-    if not i % 100:
-      tf.logging.info("Computed scores for %d of %d batches.", i + 1,
-                      num_eval_batches)
-  
-  # # comment due to json does not support integer key
-  # fp = open('%s-%d'%(os.path.join(FLAGS.eval_result_dir,'results.json'),global_step), 'w')
-  # json.dump(results, fp)
-  # fp.close()
-
-  # Evaluate these captions. Caculate blue-4, metor and cider etc
-  # eval_gt = json.load(open(model.config.eval_caption_file))
-  # eval_result = json.load(open(model.config.eval_result_file))
-  scorer = COCOEvalCap()
-  result = scorer.evaluate(eval_gt, results)
-  # print(result)
-  perplexity = sum_losses / sum_length
-
-  def add_summary(tag, score):
-    summary = tf.Summary()
-    value = summary.value.add()
-    value.simple_value = score
-    value.tag = tag
-    summary_writer.add_summary(summary, global_step)
-
-  # Log perplexity to the FileWriter.
-  add_summary("Perplexity", perplexity)
-  for (k,v) in result.items():  
-    add_summary(k, v)    
-  # Write the Events file to the eval directory.
-  summary_writer.flush()
-
-  eval_time = time.time() - start_time
-  tf.logging.info("Finished evaluation at global step %d, Perplexity = %f (%.2g sec).",
-                  global_step, perplexity, eval_time)
-
-
 # def evaluate_model(sess, model, vocab, global_step, summary_writer):
 #   """Computes perplexity-per-word over the evaluation dataset.
 
@@ -170,26 +75,121 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
 #   eval_gt = {}
 #   for i in range(num_eval_batches):
 #     # current batch sample
-#     acc,gts,res,mask, pred_cor = sess.run([
-#                 model.accuracy,
-#                 model.captions,
-#                 model.predictions,
-#                 model.masks,
-#                 model.predictions_correct
+#     filenames, image_ids, caps,box = sess.run([
+#                 model.filenames, model.image_ids, model.raw_captions, model.bounding_box
 #                 ])
-#     gts=gts[:,1:]
-#     print(acc)
-#     print(gts)
-#     print(res)
-#     print(gts==res)
-#     print(pred_cor)
-#     print(mask[:,1:])
-#     # print(type(gts),type(res))
-#     # print(gts.shape)
-#     # print(res.shape)
-#     for b in range(model.config.batch_size):
-#       print(vocab.get_sentence(gts[b]))
-#       print(vocab.get_sentence(res[b]))
+#     # print(caps,type(caps),caps.dtype,caps.shape)
+#     # print(box,type(box),box.dtype)
+#     # generate batch captions
+#     caption_data = model.beam_search(sess, vocab)
+    
+#     # generate caption in order to caluculate bleu-1 to blue-4 and cider etc
+#     for l in range(len(caption_data)):
+#         word_idxs = caption_data[l][0].sentence
+#         score = caption_data[l][0].score
+#         sum_losses += score
+#         sum_length += len(word_idxs)
+#         caption = vocab.get_sentence(word_idxs)
+#         results[image_ids[l]] = [{'caption':caption}]
+#         eval_gt[image_ids[l]] = [{'caption':byte_str.decode()} for byte_str in caps[l]]
+#         print(caption)
+#         print()
+#         print([byte_str.decode() for byte_str in caps[l]])
+#         print()
+#         print()
+#         # # Save the result in an image file, if requested
+#         # if FLAGS.save_eval_result_as_image:
+#         #     image_file = filenames[l].decode()
+#         #     image_name = image_file.split(os.sep)[-1]
+#         #     img = plt.imread(os.path.join(FLAGS.val_raw_image_dir,image_name))
+
+#         #     plt.imshow(img)
+#         #     plt.axis('off')
+#         #     plt.title(caption)
+#         #     plt.savefig(os.path.join(FLAGS.eval_result_dir,
+#         #                     os.path.splitext(image_name)[0]+'_result.jpg'))
+
+#     if not i % 100:
+#       tf.logging.info("Computed scores for %d of %d batches.", i + 1,
+#                       num_eval_batches)
+  
+#   # # comment due to json does not support integer key
+#   # fp = open('%s-%d'%(os.path.join(FLAGS.eval_result_dir,'results.json'),global_step), 'w')
+#   # json.dump(results, fp)
+#   # fp.close()
+
+#   # Evaluate these captions. Caculate blue-4, metor and cider etc
+#   # eval_gt = json.load(open(model.config.eval_caption_file))
+#   # eval_result = json.load(open(model.config.eval_result_file))
+#   scorer = COCOEvalCap()
+#   result = scorer.evaluate(eval_gt, results)
+#   # print(result)
+#   perplexity = sum_losses / sum_length
+
+#   def add_summary(tag, score):
+#     summary = tf.Summary()
+#     value = summary.value.add()
+#     value.simple_value = score
+#     value.tag = tag
+#     summary_writer.add_summary(summary, global_step)
+
+#   # Log perplexity to the FileWriter.
+#   add_summary("Perplexity", perplexity)
+#   for (k,v) in result.items():  
+#     add_summary(k, v)    
+#   # Write the Events file to the eval directory.
+#   summary_writer.flush()
+
+#   eval_time = time.time() - start_time
+#   tf.logging.info("Finished evaluation at global step %d, Perplexity = %f (%.2g sec).",
+#                   global_step, perplexity, eval_time)
+
+
+def evaluate_model(sess, model, vocab, global_step, summary_writer):
+  """Computes perplexity-per-word over the evaluation dataset.
+
+  Summaries and perplexity-per-word are written out to the eval directory.
+
+  Args:
+    sess: Session object.
+    model: Instance of ShowAndTellModel; the model to evaluate.
+    global_step: Integer; global step of the model checkpoint.
+    summary_writer: Instance of FileWriter.
+    summary_op: Op for generating model summaries.
+  """
+
+  # Compute perplexity over the entire dataset.
+  num_eval_batches = int(
+      math.ceil(FLAGS.num_eval_examples / model.config.batch_size))
+
+  start_time = time.time()
+  # for perplexity calculation
+  sum_losses = 0
+  sum_length = 0
+  results = {}
+  eval_gt = {}
+  for i in range(num_eval_batches):
+    # current batch sample
+    acc,gts,res,mask, pred_cor = sess.run([
+                model.accuracy,
+                model.captions,
+                model.predictions,
+                model.masks,
+                model.predictions_correct
+                ])
+    gts=gts[:,1:]
+    print(acc)
+    print(gts)
+    print(res)
+    print(gts==res)
+    print(pred_cor)
+    print(mask[:,1:])
+    # print(type(gts),type(res))
+    # print(gts.shape)
+    # print(res.shape)
+    for b in range(model.config.batch_size):
+      print(vocab.get_sentence(gts[b]))
+      print(vocab.get_sentence(res[b]))
 
 def run_once(model,vocab, saver, summary_writer):
   """Evaluates the latest model checkpoint.
