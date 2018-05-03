@@ -219,7 +219,7 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
         word = words_and_scores[0]
         print(vocab.id_to_word(word))
 
-        last_word = gt[0]* np.ones((model.config.batch_size), np.int32)
+        last_word = word * np.ones((model.config.batch_size), np.int32)
         last_memory = memory
         last_output = output
 
