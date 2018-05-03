@@ -21,7 +21,7 @@ from __future__ import print_function
 
 import tensorflow as tf
 import numpy as np
-
+import string
 class Vocabulary(object):
   """Vocabulary class for an image-to-text model."""
 
@@ -78,7 +78,14 @@ class Vocabulary(object):
       return self.reverse_vocab[word_id]
 
   def get_sentence(self, word_idxs):
-    words = [self.id_to_word(w) for w in word_idxs[1:-1]]
+    """ Translate a vector of indicies into a sentence. """
+    # words = [self.id_to_word(w) for w in word_idxs[1:-1]]
+    words = [self.id_to_word(w) for w in word_idxs]
+    if words[-1] != '.':
+        words.append('.')
+
     length = np.argmax(np.array(words)=='.') + 1
     words = words[:length]
-    return " ".join(words)
+    return "".join([" "+w if not w.startswith("'") \
+                            and w not in string.punctuation \
+                            else w for w in words]).strip()
