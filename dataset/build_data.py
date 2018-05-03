@@ -534,13 +534,13 @@ def main(unused_argv):
   # Create vocabulary from the training captions.
   vocab = _create_vocab(train_dataset)
   # Create image id to captions dict for evaluation
-  _create_image_id_to_captions(train_dataset,filename='train_id_captions.json')
-  _create_image_id_to_captions(val_dataset,filename='val_id_captions.json')
-  _create_image_id_to_captions(test_dataset,filename='test_id_captions.json')
+  # _create_image_id_to_captions(train_dataset,filename='train_id_captions.json')
+  # _create_image_id_to_captions(val_dataset,filename='val_id_captions.json')
+  # _create_image_id_to_captions(test_dataset,filename='test_id_captions.json')
 
-  _process_dataset("train", train_dataset, vocab, FLAGS.train_shards)
-  _process_dataset("val", val_dataset, vocab, FLAGS.val_shards)
-  _process_dataset("test", test_dataset, vocab, FLAGS.test_shards)
+  _process_dataset("train", train_dataset[0:1], vocab, FLAGS.train_shards)
+  # _process_dataset("val", val_dataset, vocab, FLAGS.val_shards)
+  # _process_dataset("test", test_dataset, vocab, FLAGS.test_shards)
 
 
 if __name__ == "__main__":
