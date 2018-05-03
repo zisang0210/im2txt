@@ -88,6 +88,8 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
     print(type(gts),type(res))
     print(gts.shape)
     print(res.shape)
+    print(vocab.get_sentence(gts[0]))
+    print(vocab.get_sentence(res[0]))
     # generate batch captions
     # caption_data = model.beam_search(sess, vocab)
     
