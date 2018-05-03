@@ -150,8 +150,14 @@ def prefetch_input_data(reader,
         dtypes=[tf.string],
         name="random_" + value_queue_name)
   else:
+    """
+    num_epochs: If specified, string_input_producer produces each string 
+    from string_tensor num_epochs times before generating an OutOfRange error. 
+    If not specified, string_input_producer can cycle through the strings in 
+    string_tensor an unlimited number of times.
+    """
     filename_queue = tf.train.string_input_producer(
-        data_files, shuffle=False, capacity=1, name=shard_queue_name)
+        data_files, num_epochs=None, shuffle=False, capacity=1, name=shard_queue_name)
     capacity = values_per_shard + 3 * batch_size
     values_queue = tf.FIFOQueue(
         capacity=capacity, dtypes=[tf.string], name="fifo_" + value_queue_name)
