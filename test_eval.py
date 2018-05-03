@@ -178,7 +178,11 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
     #             model.masks,
     #             model.predictions_correct
     #             ])
-    # gts=gts[:,1:]
+    gts = sess.run([
+                model.captions
+                ])
+
+    gts=gts[:,1:]
     # print(acc)
     # print(gts)
     # print(res)
@@ -194,9 +198,9 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
     [model.conv_feats, model.initial_memory, model.initial_output])
 
     for b in range(model.config.batch_size):
-      # print(vocab.get_sentence(gts[b]))
+      print(vocab.get_sentence(gts[b]))
       # print(vocab.get_sentence(res[b]))
-      # print()
+      print()
 
       last_word = vocab.start_id * np.ones((model.config.batch_size), np.int32)
       last_memory = initial_memory
