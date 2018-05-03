@@ -197,7 +197,7 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
       # print(vocab.get_sentence(res[b]))
       # print()
 
-      last_word = vocabulary.start_id
+      last_word = vocab.start_id
       last_memory = initial_memory
       last_output = initial_output
 
