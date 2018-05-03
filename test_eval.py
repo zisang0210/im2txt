@@ -80,6 +80,7 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
                 model.captions,
                 model.predictions
                 ])
+    gts=gts[:,1:]
     print(acc)
     print(gts)
     print(res)
