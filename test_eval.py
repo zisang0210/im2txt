@@ -178,9 +178,7 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
     #             model.masks,
     #             model.predictions_correct
     #             ])
-    gts = sess.run([
-                model.captions
-                ])
+    gts = sess.run(model.captions)
 
     gts=gts[:,1:]
     # print(acc)
