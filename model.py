@@ -344,10 +344,10 @@ class CaptionGenerator(BaseModel):
             alphas = []
             cross_entropies = []
             predictions_correct = []
-            num_steps = self.config.max_caption_length
-            last_output = initial_output
-            last_memory = initial_memory
-            last_word = sentences[:, 0]
+            num_steps = 1
+            # last_output = initial_output
+            # last_memory = initial_memory
+            # last_word = sentences[:, 0]
         else:
             num_steps = 1
         last_state = last_memory, last_output
@@ -401,10 +401,10 @@ class CaptionGenerator(BaseModel):
                     tf.cast(tf.zeros_like(prediction), tf.float32))
                 predictions_correct.append(prediction_correct)
 
-                last_output = output
-                last_memory = memory
-                last_state = state
-                last_word = sentences[:, idx]
+                # last_output = output
+                # last_memory = memory
+                # last_state = state
+                # last_word = sentences[:, idx]
 
             tf.get_variable_scope().reuse_variables()
 
