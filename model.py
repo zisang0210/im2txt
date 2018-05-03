@@ -287,7 +287,7 @@ class CaptionGenerator(BaseModel):
         self.is_train=True
 
         # Setup the placeholders
-        if self.is_train:
+        if False:
             contexts = self.conv_feats
             sentences = self.captions
             masks = self.input_mask
