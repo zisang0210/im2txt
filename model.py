@@ -13,7 +13,7 @@ class CaptionGenerator(BaseModel):
         self.build_inputs()
         self.build_cnn()
         self.build_rnn()
-        if self.is_train:
+        if False:
             self.build_optimizer()
             self.build_summary()
 
