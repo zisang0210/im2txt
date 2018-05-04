@@ -66,12 +66,12 @@ def main(argv):
         # Build the model.
         model = CaptionGenerator(config, mode="train")
         model.build()
- 
-        if FLAGS.faster_rcnn_file is not None:
-            model.load_faster_rcnn_feature_extractor(sess, FLAGS.faster_rcnn_file)
-        
-        if FLAGS.model_file is not None:
-            model.load_model_except_faster_rcnn(sess, FLAGS.model_file)
+        def init_fn(sess):
+            if FLAGS.faster_rcnn_file is not None:
+                model.load_faster_rcnn_feature_extractor(sess, FLAGS.faster_rcnn_file)
+            
+            if FLAGS.model_file is not None:
+                model.load_model_except_faster_rcnn(sess, FLAGS.model_file)
 
         # Set up the Saver for saving and restoring model checkpoints.
         saver = tf.train.Saver(max_to_keep=config.max_checkpoints_to_keep)
@@ -92,7 +92,7 @@ def main(argv):
         summary_op=model.summary,
         save_summaries_secs=600,
         save_interval_secs=60000,
-        init_fn=None,
+        init_fn=init_fn,
         saver=saver,
         session_config=sess_config)
 

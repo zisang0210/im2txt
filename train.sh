@@ -9,8 +9,8 @@ do
   --number_of_steps=$NUMBER_OF_STEPS \
   --attention="bias" \
   --optimizer="Adam" \
-  --faster_rcnn_file="../data/faster_rcnn_resnet50_coco_2018_01_28/model.ckpt"
-  --model_file="../output/model/bias_Adam_60000/model.ckpt-60000"
+  --faster_rcnn_file="../data/faster_rcnn_resnet50_coco_2018_01_28/model.ckpt" \
+  --model_file="../output/model/bias_Adam_60000/model.ckpt-60000" \
   --train_dir="../output/model/Joint_${att}_Adam_${NUMBER_OF_STEPS}";
 done
 
