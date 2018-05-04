@@ -5,6 +5,7 @@ from base_model import BaseModel
 from utils import inputs as input_ops
 from utils import image_processing
 from object_detection.models.nets import resnet_utils
+from object_detection.models.nets import resnet_v1
 slim = tf.contrib.slim
 
 class CaptionGenerator(BaseModel):
