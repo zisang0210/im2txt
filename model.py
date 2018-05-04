@@ -109,6 +109,8 @@ class CaptionGenerator(BaseModel):
             self.build_vgg16()
         else:
             self.build_resnet50()
+        print(slim.get_variables_to_restore(
+            include=["SecondStageFeatureExtractor","SecondStageBoxPredictor"]))
         print("CNN built.")
 
     def build_faster_rcnn_feature_extractor(self):
