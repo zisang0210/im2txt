@@ -286,6 +286,8 @@ class BaseModel(object):
     #                     pass
     #     print("%d tensors loaded." %count)
     def load_faster_rcnn_feature_extractor(self, sess, model_file=None):
+        print(slim.get_variables_to_restore(
+            include=["resnet_v1_50","SecondStageBoxPredictor"]))
         saver = tf.train.Saver(slim.get_variables_to_restore(
             include=["resnet_v1_50","SecondStageBoxPredictor"]))
         saver.restore(sess, model_file)
