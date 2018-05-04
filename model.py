@@ -137,7 +137,7 @@ class CaptionGenerator(BaseModel):
                         resnet_utils.resnet_arg_scope(
                                 batch_norm_epsilon=1e-5,
                                 batch_norm_scale=True,
-                                weight_decay=self._weight_decay)):
+                                weight_decay=0.0)):
                     with slim.arg_scope([slim.batch_norm],
                                                             is_training=self._train_batch_norm):
                         blocks = [
