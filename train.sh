@@ -1,15 +1,17 @@
 #!/bin/bash
 
 ATTENTION="fc1 fc2 bias bias2 bias_fc1 bias_fc2 rnn"
-NUMBER_OF_STEPS=30
+NUMBER_OF_STEPS=300000
 
 for att in $ATTENTION;
 do
   echo python train.py --input_file_pattern="../data/flickr8k/train-?????-of-00016" \
   --number_of_steps=$NUMBER_OF_STEPS \
-  --attention="${att}" \
+  --attention="bias" \
   --optimizer="Adam" \
-  --train_dir="../output/model/${att}_Adam_${NUMBER_OF_STEPS}";
+  --faster_rcnn_file="../data/faster_rcnn_resnet50_coco_2018_01_28/model.ckpt"
+  --model_file="../output/model/bias_Adam_60000/model.ckpt-60000"
+  --train_dir="../output/model/Joint_${att}_Adam_${NUMBER_OF_STEPS}";
 done
 
 
@@ -36,15 +38,17 @@ python eval.py --input_file_pattern='../data/flickr8k/val-?????-of-00008' \
     --val_raw_image_dir='../flickr8k/Flicker8k_Dataset'
 
 DATASET_DIR="../flickr8k"
-OUTPUT_DIR="../data/flickr8"
+OUTPUT_DIR="../data/flickr8k"
 python ./dataset/build_data.py \
-  --graph_path "../data/frozen_inference_graph.pb" \
+  --graph_path "../data/frozen_faster_rcnn.pb" \
   --dataset "flickr8k" \
   --min_word_count 2 \
   --image_dir "${DATASET_DIR}/Flicker8k_Dataset/" \
   --text_path "${DATASET_DIR}/" \
   --output_dir "${OUTPUT_DIR}" \
-  --train_shards 16\
+  --train_shards 16 \
+  --val_shards 1 \
+  --test_shards 1 \
   --num_threads 16
 
 tar -cvf result.rar bias_Adam_60000/

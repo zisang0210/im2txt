@@ -283,3 +283,12 @@ class BaseModel(object):
     #                 except ValueError:
     #                     pass
     #     print("%d tensors loaded." %count)
+    def load_faster_rcnn_feature_extractor(self, sess, model_file=None):
+        saver = tf.train.Saver(slim.get_variables_to_restore(
+            include=["SecondStageFeatureExtractor","SecondStageBoxPredictor"]))
+        saver.restore(sess, model_file)
+
+    def load_model_except_faster_rcnn(self, sess, model_file=None):
+        saver = tf.train.Saver(slim.get_variables_to_restore(
+            exclude=["SecondStageFeatureExtractor","SecondStageBoxPredictor"]))
+        saver.restore(sess, model_file)

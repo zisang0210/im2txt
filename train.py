@@ -9,12 +9,22 @@ FLAGS = tf.app.flags.FLAGS
 
 tf.flags.DEFINE_string('input_file_pattern', '/home/hillyess/coco_tfrecord/train-?????-of-00256',
                        'Image feature extracted using faster rcnn and corresponding captions')
+
 tf.flags.DEFINE_string('train_dir', '../output/model',
                        'Model checkpoints and summary save here')
+
+tf.flags.DEFINE_string('model_file', None,
+                       'If sepcified, load a pretrained model from this file')
+
+tf.flags.DEFINE_string('faster_rcnn_file', None,
+                       'The file containing a pretrained Faster R-CNN model')
+
 tf.flags.DEFINE_string("optimizer", "SGD",
                         "Adam, RMSProp, Momentum or SGD")
+
 tf.flags.DEFINE_float("initial_learning_rate", "0.001",
                         "")
+
 tf.flags.DEFINE_float("learning_rate_decay_factor", "0.1",
                         "")
 tf.flags.DEFINE_integer("num_steps_per_decay", "10000",
@@ -56,7 +66,13 @@ def main(argv):
         # Build the model.
         model = CaptionGenerator(config, mode="train")
         model.build()
-    
+ 
+        if FLAGS.faster_rcnn_file is not None:
+            model.load_faster_rcnn_feature_extractor(sess, FLAGS.faster_rcnn_file)
+        
+        if FLAGS.model_file is not None:
+            model.load_model_except_faster_rcnn(sess, FLAGS.model_file)
+
         # Set up the Saver for saving and restoring model checkpoints.
         saver = tf.train.Saver(max_to_keep=config.max_checkpoints_to_keep)
 
