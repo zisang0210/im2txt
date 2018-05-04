@@ -138,8 +138,7 @@ class CaptionGenerator(BaseModel):
                                 batch_norm_epsilon=1e-5,
                                 batch_norm_scale=True,
                                 weight_decay=0.0)):
-                    with slim.arg_scope([slim.batch_norm],
-                                                            is_training=self._train_batch_norm):
+                    with slim.arg_scope([slim.batch_norm],is_training=False):
                         blocks = [
                                 resnet_utils.Block('block4', resnet_v1.bottleneck, [{
                                         'depth': 2048,
