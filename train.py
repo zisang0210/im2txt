@@ -90,8 +90,8 @@ def main(argv):
         number_of_steps=FLAGS.number_of_steps,
 
         summary_op=model.summary,
-        save_summaries_secs=60,
-        save_interval_secs=600,
+        save_summaries_secs=600,
+        save_interval_secs=60000,
         init_fn=None,
         saver=saver,
         session_config=sess_config)
