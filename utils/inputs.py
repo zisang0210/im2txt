@@ -50,7 +50,7 @@ def parse_train_example(serialized):
   encoded_image = context["image/data"]
   img = tf.decode_raw(encoded_image,tf.float32)
   img = tf.reshape(img,[100,7,7,1024])
-  img = tf.tile(tf.expand_dims(img, 0), [5,1,1])
+  img = tf.tile(tf.expand_dims(img, 0), [5,1,1,1,1])
   caption = sequence["image/caption_ids"]
   mask = sequence["image/caption_mask"]
   return img, caption, mask
