@@ -117,7 +117,7 @@ class CaptionGenerator(BaseModel):
         config = self.config
         flattened_proposal_feature_maps = tf.reshape(self.images,
                             [-1,7,7,1024])
-        def _extract_box_classifier_features(self, proposal_feature_maps, scope):
+        def _extract_box_classifier_features(proposal_feature_maps, scope):
             """Extracts second stage box classifier features.
 
             Args:
