@@ -648,7 +648,9 @@ class FasterRCNNMetaArch(model.DetectionModel):
         class_predictions_with_background,
         'num_proposals': num_proposals,
         'proposal_boxes': absolute_proposal_boxes,
-        'box_classifier_features': box_classifier_features,
+        # modified by zisang to export poposal feature_maps 20180504
+        # 'box_classifier_features': box_classifier_features,
+        'box_classifier_features': flattened_proposal_feature_maps,
         'proposal_boxes_normalized': proposal_boxes_normalized,
     }
     if box_predictor.MASK_PREDICTIONS in box_predictions:

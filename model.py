@@ -4,8 +4,7 @@ import functools
 from base_model import BaseModel
 from utils import inputs as input_ops
 from utils import image_processing
-from object_detection.builders import model_builder
-from object_detection.utils import config_util
+from object_detection.models.nets import resnet_utils
 
 class CaptionGenerator(BaseModel):
     def build(self):
@@ -103,21 +102,67 @@ class CaptionGenerator(BaseModel):
         """ Build the CNN. """
         print("Building the CNN...")
         if self.config.cnn == 'rpn':
-            self.build_rpn()
+            self.build_faster_rcnn_feature_extractor()
         elif self.config.cnn == 'vgg16':
             self.build_vgg16()
         else:
             self.build_resnet50()
         print("CNN built.")
 
-    def build_rpn(self):
+    def build_faster_rcnn_feature_extractor(self):
         """ 
-        Just assign necessary variables. Feature extraction has been done during 
-        data preparing. self.images has shape [batchsize, 100, 2048]
+        Region proposal feature extraction has been done during data preparing. 
+        self.images has shape [batchsize, 100, 2048]
         """
+        config = self.config
+        flattened_proposal_feature_maps = tf.reshape(self.images,
+                            [-1,7,7,1024])
+        def _extract_box_classifier_features(self, proposal_feature_maps, scope):
+            """Extracts second stage box classifier features.
+
+            Args:
+                proposal_feature_maps: A 4-D float tensor with shape
+                    [batch_size * self.max_num_proposals, crop_height, crop_width, depth]
+                    representing the feature map cropped to each proposal.
+                scope: A scope name (unused).
+
+            Returns:
+                proposal_classifier_features: A 4-D float tensor with shape
+                    [batch_size * self.max_num_proposals, height, width, depth]
+                    representing box classifier features for each proposal.
+            """
+            with tf.variable_scope(self._architecture, reuse=self._reuse_weights):
+                with slim.arg_scope(
+                        resnet_utils.resnet_arg_scope(
+                                batch_norm_epsilon=1e-5,
+                                batch_norm_scale=True,
+                                weight_decay=self._weight_decay)):
+                    with slim.arg_scope([slim.batch_norm],
+                                                            is_training=self._train_batch_norm):
+                        blocks = [
+                                resnet_utils.Block('block4', resnet_v1.bottleneck, [{
+                                        'depth': 2048,
+                                        'depth_bottleneck': 512,
+                                        'stride': 1
+                                }] * 3)
+                        ]
+                        proposal_classifier_features = resnet_utils.stack_blocks_dense(
+                                proposal_feature_maps, blocks)
+            return proposal_classifier_features
+
+        box_classifier_features = _extract_box_classifier_features(
+                                                    flattened_proposal_feature_maps,
+                                                    scope='SecondStageFeatureExtractor')
+
+        spatial_averaged_image_features = tf.reduce_mean(image_features, [1, 2],
+                                                 keep_dims=True,
+                                                 name='AvgPool')
+
+
         self.num_ctx = 100
         self.dim_ctx = 2048
-        self.conv_feats = self.images
+        self.conv_feats = tf.reshape(spatial_averaged_image_features,
+                            [config.batch_size,self.num_ctx,self.dim_ctx])
 
     def build_vgg16(self):
         """ Build the VGG16 net. """

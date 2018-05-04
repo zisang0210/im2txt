@@ -264,8 +264,10 @@ def _add_predict_tensor_nodes(predict_tensors,
   """
   label_id_offset = 1
   boxes = predict_tensors.get('proposal_boxes_normalized')
+  feature = predict_tensors.get('box_classifier_features')
   outputs = {}
   outputs['proposal_boxes'] = tf.identity(boxes, name='proposal_boxes')
+  outputs['proposal_feature'] = tf.identity(feature, name='proposal_feature')
   for output_key in outputs:
     tf.add_to_collection(output_collection_name, outputs[output_key])
   return outputs

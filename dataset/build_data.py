@@ -185,11 +185,11 @@ class ImageDecoder(object):
 
         self._image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
         self._proposal_boxes = detection_graph.get_tensor_by_name('proposal_boxes:0')
-
+        self._feature = detection_graph.get_tensor_by_name('proposal_feature:0')
         # self._detection_scores = detection_graph.get_tensor_by_name('detection_scores:0')
         # self._detection_classes = detection_graph.get_tensor_by_name('detection_classes:0')
         # self._num_detections = detection_graph.get_tensor_by_name('num_detections:0')
-        self._feature = detection_graph.get_tensor_by_name('SecondStageBoxPredictor/AvgPool:0')
+        # self._feature = detection_graph.get_tensor_by_name('SecondStageBoxPredictor/AvgPool:0')
 
 
   def decode_jpeg(self, encoded_jpeg):

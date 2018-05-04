@@ -51,7 +51,8 @@ class FasterRcnnEncoder(GraphLoader):
     with self.open_session(self._graph) as self._sess:
       self._image_tensor = self._graph.get_tensor_by_name('image_tensor:0')
       self._proposal_boxes = self._graph.get_tensor_by_name('proposal_boxes:0')
-      self._feature = self._graph.get_tensor_by_name('SecondStageBoxPredictor/AvgPool:0')
+      self._feature = self._graph.get_tensor_by_name('proposal_feature:0')
+      # self._feature = self._graph.get_tensor_by_name('SecondStageBoxPredictor/AvgPool:0')
 
   def extract_faster_rcnn_feature(self, image_np):
 

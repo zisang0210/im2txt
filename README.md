@@ -26,7 +26,6 @@ tar -xzf faster_rcnn_resnet50_coco_2018_01_28.tar.gz
 ```
 2. frozen graph using checkpoint
 ```shell
-cd ../code/
 export PYTHONPATH=$PYTHONPATH:./object_detection/
 python ./object_detection/export_inference_graph.py \
     --input_type image_tensor \
