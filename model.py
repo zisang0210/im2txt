@@ -150,7 +150,7 @@ class CaptionGenerator(BaseModel):
                             ]
                             proposal_classifier_features = resnet_utils.stack_blocks_dense(
                                     proposal_feature_maps, blocks)
-            return proposal_classifier_features
+                return proposal_classifier_features
 
         box_classifier_features = _extract_box_classifier_features(
                                                     flattened_proposal_feature_maps,

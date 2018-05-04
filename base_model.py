@@ -288,11 +288,13 @@ class BaseModel(object):
     def load_faster_rcnn_feature_extractor(self, model_file):
         variables_to_restore = slim.get_variables_to_restore(
             include=["SecondStageFeatureExtractor","SecondStageBoxPredictor"])
+        print("variables_to_restore",variables_to_restore)
         init_assign_op, input_feed_dict = slim.assign_from_checkpoint(
             model_file, variables_to_restore)
 
     def load_model_except_faster_rcnn(self, model_file):
         variables_to_restore = slim.get_variables_to_restore(
             exclude=["SecondStageFeatureExtractor","SecondStageBoxPredictor"])
+        print("variables_to_restore",variables_to_restore)
         init_assign_op, input_feed_dict = slim.assign_from_checkpoint(
             model_file, variables_to_restore)
