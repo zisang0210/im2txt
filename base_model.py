@@ -12,6 +12,8 @@ from utils.nn import NN
 # from utils.coco.pycocoevalcap.eval import COCOEvalCap
 from utils.misc import CaptionData, TopN
 
+slim = tf.contrib.slim
+
 class BaseModel(object):
     def __init__(self, config, mode="train"):
         self.config = config
