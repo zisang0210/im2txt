@@ -131,7 +131,7 @@ class CaptionGenerator(BaseModel):
                     [batch_size * self.max_num_proposals, height, width, depth]
                     representing box classifier features for each proposal.
             """
-            with tf.variable_scope(self._architecture, reuse=self._reuse_weights):
+            with tf.variable_scope('resnet_v1_50', reuse=None):
                 with slim.arg_scope(
                         resnet_utils.resnet_arg_scope(
                                 batch_norm_epsilon=1e-5,
