@@ -155,7 +155,7 @@ class CaptionGenerator(BaseModel):
                                                     flattened_proposal_feature_maps,
                                                     scope='SecondStageFeatureExtractor')
 
-        spatial_averaged_image_features = tf.reduce_mean(image_features, [1, 2],
+        spatial_averaged_image_features = tf.reduce_mean(box_classifier_features, [1, 2],
                                                  keep_dims=True,
                                                  name='AvgPool')
 
