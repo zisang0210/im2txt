@@ -109,8 +109,6 @@ class CaptionGenerator(BaseModel):
             self.build_vgg16()
         else:
             self.build_resnet50()
-        print(slim.get_variables_to_restore(
-            include=["resnet_v1_50","SecondStageBoxPredictor"]))
         print("CNN built.")
 
     def build_faster_rcnn_feature_extractor(self):
@@ -135,22 +133,23 @@ class CaptionGenerator(BaseModel):
                     [batch_size * self.max_num_proposals, height, width, depth]
                     representing box classifier features for each proposal.
             """
-            with tf.variable_scope('resnet_v1_50', reuse=None):
-                with slim.arg_scope(
-                        resnet_utils.resnet_arg_scope(
-                                batch_norm_epsilon=1e-5,
-                                batch_norm_scale=True,
-                                weight_decay=0.0)):
-                    with slim.arg_scope([slim.batch_norm],is_training=False):
-                        blocks = [
-                                resnet_utils.Block('block4', resnet_v1.bottleneck, [{
-                                        'depth': 2048,
-                                        'depth_bottleneck': 512,
-                                        'stride': 1
-                                }] * 3)
-                        ]
-                        proposal_classifier_features = resnet_utils.stack_blocks_dense(
-                                proposal_feature_maps, blocks)
+            with tf.variable_scope(scope, values=[proposal_feature_maps]):
+                with tf.variable_scope('resnet_v1_50', reuse=None):
+                    with slim.arg_scope(
+                            resnet_utils.resnet_arg_scope(
+                                    batch_norm_epsilon=1e-5,
+                                    batch_norm_scale=True,
+                                    weight_decay=0.0)):
+                        with slim.arg_scope([slim.batch_norm],is_training=False):
+                            blocks = [
+                                    resnet_utils.Block('block4', resnet_v1.bottleneck, [{
+                                            'depth': 2048,
+                                            'depth_bottleneck': 512,
+                                            'stride': 1
+                                    }] * 3)
+                            ]
+                            proposal_classifier_features = resnet_utils.stack_blocks_dense(
+                                    proposal_feature_maps, blocks)
             return proposal_classifier_features
 
         box_classifier_features = _extract_box_classifier_features(
@@ -160,7 +159,6 @@ class CaptionGenerator(BaseModel):
         spatial_averaged_image_features = tf.reduce_mean(box_classifier_features, [1, 2],
                                                  keep_dims=True,
                                                  name='SecondStageBoxPredictor/AvgPool')
-        print(spatial_averaged_image_features)
 
 
         self.num_ctx = 100

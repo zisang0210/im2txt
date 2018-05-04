@@ -287,12 +287,12 @@ class BaseModel(object):
     #     print("%d tensors loaded." %count)
     def load_faster_rcnn_feature_extractor(self, model_file):
         variables_to_restore = slim.get_variables_to_restore(
-            include=["resnet_v1_50","SecondStageBoxPredictor"])
+            include=["SecondStageFeatureExtractor","SecondStageBoxPredictor"])
         init_assign_op, input_feed_dict = slim.assign_from_checkpoint(
             model_file, variables_to_restore)
 
     def load_model_except_faster_rcnn(self, model_file):
         variables_to_restore = slim.get_variables_to_restore(
-            exclude=["resnet_v1_50","SecondStageBoxPredictor"])
+            exclude=["SecondStageFeatureExtractor","SecondStageBoxPredictor"])
         init_assign_op, input_feed_dict = slim.assign_from_checkpoint(
             model_file, variables_to_restore)
