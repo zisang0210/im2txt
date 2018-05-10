@@ -83,27 +83,27 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
     # generate batch captions
     caption_data = model.beam_search(sess, vocab)
     
-    # generate caption in order to caluculate bleu-1 to blue-4 and cider etc
-    for l in range(len(caption_data)):
-        word_idxs = caption_data[l][0].sentence
-        score = caption_data[l][0].score
-        sum_losses += score
-        sum_length += len(word_idxs)
-        caption = vocab.get_sentence(word_idxs)
-        results[image_ids[l]] = [{'caption':caption}]
-        eval_gt[image_ids[l]] = [{'caption':byte_str.decode()} for byte_str in caps[l]]
+    # # generate caption in order to caluculate bleu-1 to blue-4 and cider etc
+    # for l in range(len(caption_data)):
+    #     word_idxs = caption_data[l][0].sentence
+    #     score = caption_data[l][0].score
+    #     sum_losses += score
+    #     sum_length += len(word_idxs)
+    #     caption = vocab.get_sentence(word_idxs)
+    #     results[image_ids[l]] = [{'caption':caption}]
+    #     eval_gt[image_ids[l]] = [{'caption':byte_str.decode()} for byte_str in caps[l]]
 
-        # Save the result in an image file, if requested
-        if FLAGS.save_eval_result_as_image:
-            image_file = filenames[l].decode()
-            image_name = image_file.split(os.sep)[-1]
-            img = plt.imread(os.path.join(FLAGS.val_raw_image_dir,image_name))
+    #     # Save the result in an image file, if requested
+    #     if FLAGS.save_eval_result_as_image:
+    #         image_file = filenames[l].decode()
+    #         image_name = image_file.split(os.sep)[-1]
+    #         img = plt.imread(os.path.join(FLAGS.val_raw_image_dir,image_name))
 
-            plt.imshow(img)
-            plt.axis('off')
-            plt.title(caption)
-            plt.savefig(os.path.join(FLAGS.eval_result_dir,
-                            os.path.splitext(image_name)[0]+'_result.jpg'))
+    #         plt.imshow(img)
+    #         plt.axis('off')
+    #         plt.title(caption)
+    #         plt.savefig(os.path.join(FLAGS.eval_result_dir,
+    #                         os.path.splitext(image_name)[0]+'_result.jpg'))
 
     if not i % 100:
       tf.logging.info("Computed scores for %d of %d batches.", i + 1,
