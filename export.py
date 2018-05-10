@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
   
     config = Config()
-    config.batch_size = 1
+    # config.batch_size = 1
     config.attention_mechanism = args.attention
 
     export_graph(args.model_folder,args.output_path,config)  
