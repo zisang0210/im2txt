@@ -29,7 +29,7 @@ class CaptionGenerator(BaseModel):
         """
         if self.mode == "inference":
             # In inference mode, images are fed via placeholders.
-            self.images = tf.placeholder(dtype=tf.float32, shape=[100,2048], 
+            self.images = tf.placeholder(dtype=tf.float32, shape=[100,7,7,1024], 
                                                             name="image_feed")
 
         else:
