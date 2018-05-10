@@ -161,11 +161,13 @@ class LSTMDecoder(GraphLoader):
     self._graph = self.load_graph(graph_path)
     with self.open_session(self._graph) as self._sess:
       # inputs
+      self._images = self._graph.get_tensor_by_name('image_feed:0')
       self._contexts = self._graph.get_tensor_by_name('contexts:0')
       self._last_word = self._graph.get_tensor_by_name('last_word:0')
       self._last_memory = self._graph.get_tensor_by_name('last_memory:0')
       self._last_output = self._graph.get_tensor_by_name('last_output:0')
       # output
+      self._conv_feats = self._graph.get_tensor_by_name('conv_feats:0')
       self._initial_memory = self._graph.get_tensor_by_name('initial_memory:0')
       self._initial_output = self._graph.get_tensor_by_name('initial_output:0')
       self._memory = self._graph.get_tensor_by_name('memory:0')
@@ -220,13 +222,14 @@ class LSTMDecoder(GraphLoader):
     
     plt.savefig(save_path)
 
-  def decode(self, contexts):
+  def decode(self, region_poposal_feature):
     """Use beam search to generate the captions for a batch of images."""
     # Feed in the images to get the contexts and the initial LSTM states
-    contexts = np.expand_dims(contexts, axis=0)
-    initial_memory, initial_output = self._sess.run(
-      [self._initial_memory, self._initial_output],
-      feed_dict={self._contexts: contexts})
+    # contexts = np.expand_dims(contexts, axis=0)
+    region_poposal_feature = np.tile(region_poposal_feature, (32,1,1,1,1))
+    context, initial_memory, initial_output = self._sess.run(
+      [self._conv_feats, self._initial_memory, self._initial_output],
+      feed_dict={self._images: region_poposal_feature})
 
     def _inference_step_fn(last_word, last_memory, last_output):
       return self._sess.run([self._memory, self._output, self._probs, self._alpha],

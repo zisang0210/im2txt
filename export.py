@@ -18,6 +18,7 @@ def export_graph(model_folder,model_name,config):
     # inputs['last_memory'] = tf.identity(model.last_memory, name='last_memory')
     # inputs['last_output'] = tf.identity(model.last_output, name='last_output')
     # outputs
+    outputs['conv_feats'] = tf.identity(model.conv_feats, name='conv_feats')
     outputs['initial_memory'] = tf.identity(model.initial_memory, name='initial_memory')
     outputs['initial_output'] = tf.identity(model.initial_output, name='initial_output')
     

@@ -164,7 +164,8 @@ class CaptionGenerator(BaseModel):
         self.num_ctx = 100
         self.dim_ctx = 2048
         self.conv_feats = tf.reshape(spatial_averaged_image_features,
-                            [config.batch_size,self.num_ctx,self.dim_ctx])
+                            [config.batch_size,self.num_ctx,self.dim_ctx],
+                            name='conv_feats')
 
     def build_vgg16(self):
         """ Build the VGG16 net. """
