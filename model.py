@@ -337,13 +337,13 @@ class CaptionGenerator(BaseModel):
             sentences = self.captions
             masks = self.input_mask
         else:
-            if self.mode =='eval':
-                contexts = self.conv_feats
-            else:
-                contexts = tf.placeholder(
-                    dtype = tf.float32,
-                    shape = [config.batch_size, self.num_ctx, self.dim_ctx],
-                    name = 'contexts')
+            # if self.mode =='eval':
+            #     contexts = self.conv_feats
+            # else:
+            contexts = tf.placeholder(
+                dtype = tf.float32,
+                shape = [config.batch_size, self.num_ctx, self.dim_ctx],
+                name = 'contexts')
             last_memory = tf.placeholder(
                 dtype = tf.float32,
                 shape = [config.batch_size, config.num_lstm_units],
