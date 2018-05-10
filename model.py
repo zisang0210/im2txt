@@ -379,7 +379,7 @@ class CaptionGenerator(BaseModel):
 
         # Initialize the LSTM using the mean context
         with tf.variable_scope("initialize"):
-            context_mean = tf.reduce_mean(contexts, axis = 1)
+            context_mean = tf.reduce_mean(self.conv_feats, axis = 1)
             initial_memory, initial_output = self.initialize(context_mean)
             initial_state = initial_memory, initial_output
 
