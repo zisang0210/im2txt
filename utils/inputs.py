@@ -243,7 +243,7 @@ def batch_with_dynamic_pad(images_and_captions,
   images, captions, mask = tf.train.shuffle_batch_join(
       images_and_captions,
       batch_size=batch_size,
-      capacity=queue_capacity,
+      capacity=64,
       enqueue_many=True,
       shapes=[[100,7,7,1024],[21],[21]],
       min_after_dequeue=32,
