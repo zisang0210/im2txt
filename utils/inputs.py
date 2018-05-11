@@ -246,7 +246,7 @@ def batch_with_dynamic_pad(images_and_captions,
       capacity=queue_capacity,
       enqueue_many=True,
       shapes=[[100,7,7,1024],[21],[21]],
-      min_after_dequeue=128,
+      min_after_dequeue=queue_capacity/2,
       name="batch_and_pad")
 
   if add_summaries:
