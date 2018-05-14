@@ -54,7 +54,7 @@ class Config(object):
         self.log_every_n_steps = 10
 
         self.num_epochs = 100
-        self.batch_size = 8
+        self.batch_size = 4
         self.optimizer = 'Adam'    # 'Adam', 'RMSProp', 'Momentum' or 'SGD'
         self.initial_learning_rate = 0.0001
         self.learning_rate_decay_factor = 1.0
