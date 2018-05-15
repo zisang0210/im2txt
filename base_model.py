@@ -162,6 +162,7 @@ class BaseModel(object):
         filenames, contexts, initial_memory, initial_output = sess.run(
             [self.filenames, self.conv_feats, self.initial_memory, self.initial_output])
         print(filenames)
+        exit()
         partial_caption_data = []
         complete_caption_data = []
         for k in range(config.batch_size):
