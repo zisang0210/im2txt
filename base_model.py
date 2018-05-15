@@ -159,10 +159,10 @@ class BaseModel(object):
         """Use beam search to generate the captions for a batch of images."""
         # Feed in the images to get the contexts and the initial LSTM states
         config = self.config
-        filenames, contexts, initial_memory, initial_output = sess.run(
-            [self.filenames, self.conv_feats, self.initial_memory, self.initial_output])
-        print(filenames)
-        exit()
+        filenames, image_ids, caps, box, contexts, initial_memory, initial_output = sess.run(
+            [self.filenames, self.image_ids, self.captions, self.bounding_box, 
+            self.conv_feats, self.initial_memory, self.initial_output])
+
         partial_caption_data = []
         complete_caption_data = []
         for k in range(config.batch_size):
@@ -231,7 +231,7 @@ class BaseModel(object):
                 complete_caption_data[k] = partial_caption_data[k]
             results.append(complete_caption_data[k].extract(sort=True))
 
-        return results
+        return filenames, image_ids, caps, box, results
 
     def save(self):
         """ Save the model. """
