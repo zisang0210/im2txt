@@ -78,6 +78,7 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
     filenames, image_ids, caps,box = sess.run([
                 model.filenames, model.image_ids, model.captions, model.bounding_box
                 ])
+    print(filenames)
     # print(caps,type(caps),caps.dtype,caps.shape)
     # print(box,type(box),box.dtype)
     # generate batch captions

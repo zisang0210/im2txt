@@ -226,7 +226,8 @@ class LSTMDecoder(GraphLoader):
     """Use beam search to generate the captions for a batch of images."""
     # Feed in the images to get the contexts and the initial LSTM states
     # contexts = np.expand_dims(contexts, axis=0)
-    region_poposal_feature = np.tile(region_poposal_feature, (32,1,1,1,1))
+    batch_size = 1
+    region_poposal_feature = np.tile(region_poposal_feature, (batch_size,1,1,1,1))
     contexts, initial_memory, initial_output = self._sess.run(
       [self._conv_feats, self._initial_memory, self._initial_output],
       feed_dict={self._images: region_poposal_feature})
@@ -234,9 +235,9 @@ class LSTMDecoder(GraphLoader):
     def _inference_step_fn(last_word, last_memory, last_output):
       return self._sess.run([self._memory, self._output, self._probs, self._alpha],
                             feed_dict = {self._contexts: contexts,
-                                         self._last_word: np.tile(last_word,32),
-                                         self._last_memory: np.tile(last_memory,(32,1)),
-                                         self._last_output: np.tile(last_output,(32,1))})
+                                         self._last_word: np.tile(last_word,batch_size),
+                                         self._last_memory: np.tile(last_memory,(batch_size,1)),
+                                         self._last_output: np.tile(last_output,(batch_size,1))})
     # generate caption for each picture
     bs = BeamSearch(3,self._max_caption_length,self._vocab.start_id,self._vocab.end_id,1)
     # Run beam search
