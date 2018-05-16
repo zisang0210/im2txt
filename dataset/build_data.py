@@ -125,11 +125,9 @@ tf.flags.DEFINE_string("text_path", "/home/hillyess/ai/project-image-caption/Fli
 
 tf.flags.DEFINE_string("output_dir", "/home/hillyess/coco_tfrecord", "Output data directory.")
 
-tf.flags.DEFINE_integer("train_shards", 256,
+tf.flags.DEFINE_integer("train_shards", 32,
                         "Number of shards in training TFRecord files.")
-tf.flags.DEFINE_integer("val_shards", 8,
-                        "Number of shards in validation TFRecord files.")
-tf.flags.DEFINE_integer("test_shards", 16,
+tf.flags.DEFINE_integer("test_shards", 4,
                         "Number of shards in testing TFRecord files.")
 
 tf.flags.DEFINE_string("start_word", "<S>",
@@ -517,8 +515,6 @@ def main(unused_argv):
 
   assert _is_valid_num_shards(FLAGS.train_shards), (
       "Please make the FLAGS.num_threads commensurate with FLAGS.train_shards")
-  assert _is_valid_num_shards(FLAGS.val_shards), (
-      "Please make the FLAGS.num_threads commensurate with FLAGS.val_shards")
   assert _is_valid_num_shards(FLAGS.test_shards), (
       "Please make the FLAGS.num_threads commensurate with FLAGS.test_shards")
   assert (FLAGS.dataset in LOAD_DATASET_MAP), (
@@ -529,17 +525,16 @@ def main(unused_argv):
   if not tf.gfile.IsDirectory(FLAGS.output_dir):
     tf.gfile.MakeDirs(FLAGS.output_dir)
 
-  train_dataset,val_dataset,test_dataset = load_dataset(FLAGS)
+  # train_dataset,val_dataset,test_dataset = load_dataset(FLAGS)
+  train_dataset,test_dataset = load_dataset(FLAGS)
 
   # Create vocabulary from the training captions.
   vocab = _create_vocab(train_dataset)
   # Create image id to captions dict for evaluation
   _create_image_id_to_captions(train_dataset,filename='train_id_captions.json')
-  _create_image_id_to_captions(val_dataset,filename='val_id_captions.json')
   _create_image_id_to_captions(test_dataset,filename='test_id_captions.json')
 
   _process_dataset("train", train_dataset, vocab, FLAGS.train_shards)
-  _process_dataset("val", val_dataset, vocab, FLAGS.val_shards)
   _process_dataset("test", test_dataset, vocab, FLAGS.test_shards)
 
 

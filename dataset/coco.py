@@ -55,13 +55,14 @@ def load_coco_dataset(FLAGS):
   mscoco_val_dataset = _load_coco_metadata(FLAGS.val_captions_file,
                                                   FLAGS.val_image_dir)
 
-  # Redistribute the MSCOCO data as follows:
-  #   train_dataset = 100% of mscoco_train_dataset + 85% of mscoco_val_dataset.
-  #   val_dataset = 5% of mscoco_val_dataset (for validation during training).
-  #   test_dataset = 10% of mscoco_val_dataset (for final evaluation).
-  train_cutoff = int(0.85 * len(mscoco_val_dataset))
-  val_cutoff = int(0.90 * len(mscoco_val_dataset))
-  train_dataset = mscoco_train_dataset + mscoco_val_dataset[0:train_cutoff]
-  val_dataset = mscoco_val_dataset[train_cutoff:val_cutoff]
-  test_dataset = mscoco_val_dataset[val_cutoff:]
-  return train_dataset, val_dataset, test_dataset
+  # # Redistribute the MSCOCO data as follows:
+  # #   train_dataset = 100% of mscoco_train_dataset + 85% of mscoco_val_dataset.
+  # #   val_dataset = 5% of mscoco_val_dataset (for validation during training).
+  # #   test_dataset = 10% of mscoco_val_dataset (for final evaluation).
+  # train_cutoff = int(0.85 * len(mscoco_val_dataset))
+  # val_cutoff = int(0.90 * len(mscoco_val_dataset))
+  # train_dataset = mscoco_train_dataset + mscoco_val_dataset[0:train_cutoff]
+  # val_dataset = mscoco_val_dataset[train_cutoff:val_cutoff]
+  # test_dataset = mscoco_val_dataset[val_cutoff:]
+  # return train_dataset, val_dataset, test_dataset
+  return mscoco_train_dataset, mscoco_val_dataset

@@ -86,15 +86,16 @@ def load_flickr8k_dataset(FLAGS):
   flickr8k_train_dataset, flickr8k_test_dataset = \
       load_flickr8k_metadata(FLAGS.text_path,FLAGS.image_dir)
 
-  # Redistribute the FLICKR8K data as follows:
-  #   train_dataset = 100% of flickr8k_train_dataset + 85% of flickr8k_test_dataset.
-  #   val_dataset = 5% of flickr8k_test_dataset (for validation during training).
-  #   test_dataset = 10% of flickr8k_test_dataset (for final evaluation).
-  train_cutoff = int(0.85 * len(flickr8k_test_dataset))
-  val_cutoff = int(0.90 * len(flickr8k_test_dataset))
+  # # Redistribute the FLICKR8K data as follows:
+  # #   train_dataset = 100% of flickr8k_train_dataset + 85% of flickr8k_test_dataset.
+  # #   val_dataset = 5% of flickr8k_test_dataset (for validation during training).
+  # #   test_dataset = 10% of flickr8k_test_dataset (for final evaluation).
+  # train_cutoff = int(0.85 * len(flickr8k_test_dataset))
+  # val_cutoff = int(0.90 * len(flickr8k_test_dataset))
 
-  train_dataset = flickr8k_train_dataset + flickr8k_test_dataset[0:train_cutoff]
-  val_dataset = flickr8k_test_dataset[train_cutoff:val_cutoff]
-  test_dataset = flickr8k_test_dataset[val_cutoff:]
+  # train_dataset = flickr8k_train_dataset + flickr8k_test_dataset[0:train_cutoff]
+  # val_dataset = flickr8k_test_dataset[train_cutoff:val_cutoff]
+  # test_dataset = flickr8k_test_dataset[val_cutoff:]
   
-  return train_dataset, val_dataset, test_dataset
+  # return train_dataset, val_dataset, test_dataset
+  return flickr8k_train_dataset, flickr8k_test_dataset
