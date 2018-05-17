@@ -45,7 +45,7 @@ tf.flags.DEFINE_string("val_raw_image_dir", None,
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
-def evaluate_model(sess, model, vocab, global_step, summary_writer):
+def evaluate_model(sess, model, vocab, global_step):
   """Computes perplexity-per-word over the evaluation dataset.
 
   Summaries and perplexity-per-word are written out to the eval directory.
@@ -54,8 +54,6 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
     sess: Session object.
     model: Instance of ShowAndTellModel; the model to evaluate.
     global_step: Integer; global step of the model checkpoint.
-    summary_writer: Instance of FileWriter.
-    summary_op: Op for generating model summaries.
   """
 
   # Compute perplexity over the entire dataset.
@@ -123,14 +121,13 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
   #                 global_step, perplexity, eval_time)
 
 
-def run_once(model,vocab, saver, summary_writer):
+def run_once(model,vocab, saver):
   """Evaluates the latest model checkpoint.
 
   Args:
     model: Instance of ShowAndTellModel; the model to evaluate.
     vocab: Dictionary generated duiring data preparing
     saver: Instance of tf.train.Saver for restoring model Variables.
-    summary_writer: Instance of FileWriter.
   """
   model_path = tf.train.latest_checkpoint(FLAGS.checkpoint_dir)
   if not model_path:
@@ -157,8 +154,7 @@ def run_once(model,vocab, saver, summary_writer):
           sess=sess,
           model=model,
           vocab=vocab,
-          global_step=global_step,
-          summary_writer=summary_writer)
+          global_step=global_step)
     except Exception as e:
       tf.logging.error("Evaluation failed.")
       coord.request_stop(e)
@@ -168,7 +164,7 @@ def run_once(model,vocab, saver, summary_writer):
 
 
 def run():
-  """Runs evaluation in a loop, and logs summaries to TensorBoard."""
+  """Runs evaluation."""
   # Create the evaluation directory if it doesn't exist.
   eval_dir = FLAGS.eval_dir
   if not tf.gfile.IsDirectory(eval_dir):
@@ -200,16 +196,13 @@ def run():
     # Create the Saver to restore model Variables.
     saver = tf.train.Saver()
 
-    # Create the summary writer.
-    summary_writer = tf.summary.FileWriter(eval_dir)
-
-    g.finalize()
+    # g.finalize()
 
     # Run evaluation
     start = time.time()
     tf.logging.info("Starting evaluation at " + time.strftime(
         "%Y-%m-%d-%H:%M:%S", time.localtime()))
-    run_once(model,vocab, saver, summary_writer)
+    run_once(model,vocab, saver)
 
 
 def main(unused_argv):
