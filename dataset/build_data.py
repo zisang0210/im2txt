@@ -164,6 +164,7 @@ class ImageDecoder(object):
     # TensorFlow ops for JPEG decoding.
     self._encoded_jpeg = tf.placeholder(dtype=tf.string)
     self._decode_jpeg = tf.image.decode_jpeg(self._encoded_jpeg, channels=3)
+    self._sess = tf.Session()
 
 
     # detection_graph = tf.Graph()
