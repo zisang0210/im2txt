@@ -71,7 +71,7 @@ def evaluate_model(sess, model, vocab, global_step, summary_writer):
     while True:
       i=i+1
       # current batch sample
-      filenames= sess.run(self.filenames)
+      filenames= sess.run(model.filenames)
       for n in filenames:
         fs.add(n)
   except Exception as e:
