@@ -87,7 +87,7 @@ def parse_eval_example(serialized):
 
   encoded_image = context["image/data"]
   img = tf.decode_raw(encoded_image,tf.float32)
-  img = tf.reshape(img,[100,7,7,1024])
+  # img = tf.reshape(img,[100,7,7,1024])
 
   # bounding_box = context["iamge/bounding_box"]
   # bounding_box = tf.decode_raw(bounding_box,tf.float32)
