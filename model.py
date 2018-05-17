@@ -12,11 +12,11 @@ class CaptionGenerator(BaseModel):
     def build(self):
         """ Build the model. """
         self.build_inputs()
-        self.build_cnn()
-        self.build_rnn()
-        if self.is_train:
-            self.build_optimizer()
-            self.build_summary()
+        # self.build_cnn()
+        # self.build_rnn()
+        # if self.is_train:
+        #     self.build_optimizer()
+        #     self.build_summary()
 
     def build_inputs(self):
         """Input prefetching, preprocessing and batching.
