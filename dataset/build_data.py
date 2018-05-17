@@ -166,28 +166,28 @@ class ImageDecoder(object):
     self._decode_jpeg = tf.image.decode_jpeg(self._encoded_jpeg, channels=3)
 
 
-    detection_graph = tf.Graph()
-    with detection_graph.as_default():
-      od_graph_def = tf.GraphDef()
-      with tf.gfile.GFile(graph_path, 'rb') as fid:
-        serialized_graph = fid.read()
-        od_graph_def.ParseFromString(serialized_graph)
-        tf.import_graph_def(od_graph_def, name='')
+    # detection_graph = tf.Graph()
+    # with detection_graph.as_default():
+    #   od_graph_def = tf.GraphDef()
+    #   with tf.gfile.GFile(graph_path, 'rb') as fid:
+    #     serialized_graph = fid.read()
+    #     od_graph_def.ParseFromString(serialized_graph)
+    #     tf.import_graph_def(od_graph_def, name='')
 
 
-    sess_config = tf.ConfigProto()
-    sess_config.gpu_options.allow_growth = True
-    with detection_graph.as_default():
-      # Create a single TensorFlow Session for all image decoding calls.
-      with tf.Session(config=sess_config, graph=detection_graph) as self._sess:
+    # sess_config = tf.ConfigProto()
+    # sess_config.gpu_options.allow_growth = True
+    # with detection_graph.as_default():
+    #   # Create a single TensorFlow Session for all image decoding calls.
+    #   with tf.Session(config=sess_config, graph=detection_graph) as self._sess:
 
-        self._image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
-        self._proposal_boxes = detection_graph.get_tensor_by_name('proposal_boxes:0')
-        self._feature = detection_graph.get_tensor_by_name('proposal_feature:0')
-        # self._detection_scores = detection_graph.get_tensor_by_name('detection_scores:0')
-        # self._detection_classes = detection_graph.get_tensor_by_name('detection_classes:0')
-        # self._num_detections = detection_graph.get_tensor_by_name('num_detections:0')
-        # self._feature = detection_graph.get_tensor_by_name('SecondStageBoxPredictor/AvgPool:0')
+    #     self._image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
+    #     self._proposal_boxes = detection_graph.get_tensor_by_name('proposal_boxes:0')
+    #     self._feature = detection_graph.get_tensor_by_name('proposal_feature:0')
+    #     # self._detection_scores = detection_graph.get_tensor_by_name('detection_scores:0')
+    #     # self._detection_classes = detection_graph.get_tensor_by_name('detection_classes:0')
+    #     # self._num_detections = detection_graph.get_tensor_by_name('num_detections:0')
+    #     # self._feature = detection_graph.get_tensor_by_name('SecondStageBoxPredictor/AvgPool:0')
 
 
   def decode_jpeg(self, encoded_jpeg):
