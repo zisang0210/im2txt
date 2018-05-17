@@ -196,7 +196,7 @@ def run():
     # Create the Saver to restore model Variables.
     saver = tf.train.Saver()
 
-    g.finalize()
+    # g.finalize()
 
     # Run evaluation
     start = time.time()
