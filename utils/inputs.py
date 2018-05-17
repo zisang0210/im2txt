@@ -157,7 +157,7 @@ def prefetch_input_data(reader,
     string_tensor an unlimited number of times.
     """
     filename_queue = tf.train.string_input_producer(
-        data_files, num_epochs=None, shuffle=False, capacity=1, name=shard_queue_name)
+        data_files, num_epochs=1, shuffle=False, capacity=1, name=shard_queue_name)
     capacity = values_per_shard + 3 * batch_size
     values_queue = tf.FIFOQueue(
         capacity=capacity, dtypes=[tf.string], name="fifo_" + value_queue_name)
@@ -243,10 +243,10 @@ def batch_with_dynamic_pad(images_and_captions,
   images, captions, mask = tf.train.shuffle_batch_join(
       images_and_captions,
       batch_size=batch_size,
-      capacity=queue_capacity,
+      capacity=64,
       enqueue_many=True,
       shapes=[[100,7,7,1024],[21],[21]],
-      min_after_dequeue=128,
+      min_after_dequeue=32,
       name="batch_and_pad")
 
   if add_summaries:
