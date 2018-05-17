@@ -80,6 +80,7 @@ class CaptionGenerator(BaseModel):
                                                           capacity=queue_capacity,
                                                           dynamic_pad=True,
                                                           enqueue_many=False,
+                                                          allow_smaller_final_batch=True,
                                                           name="batch_generation")
 
     def process_image(self, encoded_image, thread_id=0):

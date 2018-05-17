@@ -136,7 +136,7 @@ def run_once(model,vocab, saver):
     return
 
   with tf.Session() as sess:
-    sess.run(tf.initialize_local_variables())
+    sess.run(tf.tf.local_variables_initializer())
     # Load model from checkpoint.
     tf.logging.info("Loading model from checkpoint: %s", model_path)
     saver.restore(sess, model_path)
