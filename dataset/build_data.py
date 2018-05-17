@@ -297,14 +297,14 @@ def _to_sequence_example(image, decoder, vocab):
     A SequenceExample proto.
   """
   # code from tensorflow/models im2txt modified by zisang 20180418
-  # with tf.gfile.FastGFile(image.filename, "rb") as f:
-  #   encoded_image = f.read()
+  with tf.gfile.FastGFile(image.filename, "rb") as f:
+    encoded_image = f.read()
 
-  # try:
-  #   encoded_image = decoder.decode_jpeg(encoded_image)
-  # except (tf.errors.InvalidArgumentError, AssertionError):
-  #   print("Skipping file with invalid JPEG data: %s" % image.filename)
-  #   return
+  try:
+    encoded_image = decoder.decode_jpeg(encoded_image)
+  except (tf.errors.InvalidArgumentError, AssertionError):
+    print("Skipping file with invalid JPEG data: %s" % image.filename)
+    return
   
   #
   #if not (len(image.captions) == 5):
@@ -312,15 +312,15 @@ def _to_sequence_example(image, decoder, vocab):
   #  pass
   image_captions = fix_length_list(image.captions, 5)
   assert len(image_captions) == 5
-  try:
-    bounding_box, feature_map = decoder.extract_faster_rcnn_feature(image.filename)
-  except TypeError:
-    return None
+  # try:
+  #   bounding_box, feature_map = decoder.extract_faster_rcnn_feature(image.filename)
+  # except TypeError:
+  #   return None
   context = tf.train.Features(feature={
       "image/image_id": _int64_feature(image.image_id),
       "image/filename": _bytes_feature(bytes(image.filename, encoding="utf8")),
-      "image/data": _bytes_feature(feature_map.tostring()),
-      "iamge/bounding_box": _bytes_feature(bounding_box.tostring())
+      "image/data": _bytes_feature(encoded_image.tostring()),
+      # "iamge/bounding_box": _bytes_feature(bounding_box.tostring())
   })
 
   img_captions_ids = []
