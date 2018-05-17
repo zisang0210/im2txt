@@ -92,10 +92,10 @@ def parse_eval_example(serialized):
   # bounding_box = context["iamge/bounding_box"]
   # bounding_box = tf.decode_raw(bounding_box,tf.float32)
   # bounding_box = tf.reshape(bounding_box,[100,4])
-  bounding_box = None
+
   caption = sequence["iamge/raw_caption"]
 
-  return img, image_id, filename, caption, bounding_box
+  return img, image_id, filename, caption, img
 
 def prefetch_input_data(reader,
                         file_pattern,
