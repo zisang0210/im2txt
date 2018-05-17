@@ -69,12 +69,12 @@ class CaptionGenerator(BaseModel):
                     serialized_sequence_example = input_queue.dequeue()
                     images, image_ids, filenames, captions, bounding_box = \
                             input_ops.parse_eval_example(serialized_sequence_example)
-                    images_and_captions.append([images, image_ids, filenames, captions,bounding_box])
+                    images_and_captions.append([images, image_ids, filenames, captions])
 
                 # Batch inputs.
                 queue_capacity = (2 * self.config.num_preprocess_threads *
                                                     self.config.batch_size)
-                self.images,self.image_ids, self.filenames, self.captions, self.bounding_box \
+                self.images,self.image_ids, self.filenames, self.captions \
                                   = tf.train.batch_join(images_and_captions,
                                                           batch_size=self.config.batch_size,
                                                           capacity=queue_capacity,
