@@ -146,7 +146,7 @@ def run_once(model,vocab, saver):
 
     # Start the queue runners.
     coord = tf.train.Coordinator()
-    threads = tf.train.start_queue_runners(coord=coord)
+    threads = tf.train.start_queue_runners(sess,coord=coord)
 
     # Run evaluation on the latest checkpoint.
     try:
