@@ -98,4 +98,4 @@ def load_flickr8k_dataset(FLAGS):
   # test_dataset = flickr8k_test_dataset[val_cutoff:]
   
   # return train_dataset, val_dataset, test_dataset
-  return flickr8k_train_dataset[:64], flickr8k_test_dataset[:8]
+  return flickr8k_train_dataset, flickr8k_test_dataset

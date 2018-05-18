@@ -12,11 +12,11 @@ class CaptionGenerator(BaseModel):
     def build(self):
         """ Build the model. """
         self.build_inputs()
-        # self.build_cnn()
-        # self.build_rnn()
-        # if self.is_train:
-        #     self.build_optimizer()
-        #     self.build_summary()
+        self.build_cnn()
+        self.build_rnn()
+        if self.is_train:
+            self.build_optimizer()
+            self.build_summary()
 
     def build_inputs(self):
         """Input prefetching, preprocessing and batching.
@@ -69,18 +69,17 @@ class CaptionGenerator(BaseModel):
                     serialized_sequence_example = input_queue.dequeue()
                     images, image_ids, filenames, captions, bounding_box = \
                             input_ops.parse_eval_example(serialized_sequence_example)
-                    images_and_captions.append([images, image_ids, filenames, captions])
+                    images_and_captions.append([images, image_ids, filenames, captions,bounding_box])
 
                 # Batch inputs.
                 queue_capacity = (2 * self.config.num_preprocess_threads *
                                                     self.config.batch_size)
-                self.images,self.image_ids, self.filenames, self.captions \
+                self.images,self.image_ids, self.filenames, self.captions, self.bounding_box \
                                   = tf.train.batch_join(images_and_captions,
                                                           batch_size=self.config.batch_size,
                                                           capacity=queue_capacity,
                                                           dynamic_pad=True,
                                                           enqueue_many=False,
-                                                          allow_smaller_final_batch=True,
                                                           name="batch_generation")
 
     def process_image(self, encoded_image, thread_id=0):

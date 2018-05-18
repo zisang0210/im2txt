@@ -38,7 +38,7 @@ python eval.py --input_file_pattern='../data/flickr8k/val-?????-of-00008' \
     --val_raw_image_dir='../flickr8k/Flicker8k_Dataset'
 
 DATASET_DIR="../flickr8k"
-OUTPUT_DIR="../data/flickr8k"
+OUTPUT_DIR="../data/flickr8k_origin_small"
 python ./dataset/build_data.py \
   --graph_path "../data/frozen_faster_rcnn.pb" \
   --dataset "flickr8k" \
@@ -46,10 +46,10 @@ python ./dataset/build_data.py \
   --image_dir "${DATASET_DIR}/Flicker8k_Dataset/" \
   --text_path "${DATASET_DIR}/" \
   --output_dir "${OUTPUT_DIR}" \
-  --train_shards 16 \
+  --train_shards 1 \
   --val_shards 1 \
   --test_shards 1 \
-  --num_threads 16
+  --num_threads 32
 
 tar -cvf result.rar bias_Adam_60000/
 scp zshwu@202.114.96.180:/home/zshwu/data/val/results/result.rar ./

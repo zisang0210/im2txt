@@ -1,6 +1,7 @@
 from collections import namedtuple
 import nltk.tokenize
-
+import nltk
+nltk.download('punkt')
 ImageMetadata = namedtuple("ImageMetadata",
                            ["image_id", "filename", "captions", "raw_captions"])
 
