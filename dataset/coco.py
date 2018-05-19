@@ -2,7 +2,7 @@ import tensorflow as tf
 import json
 
 import os
-from common import ImageMetadata, process_caption
+from dataset.common import ImageMetadata, process_caption
 
 def _load_coco_metadata(captions_file, image_dir):
   """Loads image metadata from a JSON file and processes the captions.

@@ -1,5 +1,5 @@
 import os
-from common import ImageMetadata, process_caption
+from dataset.common import ImageMetadata, process_caption
 
 def _load_image_filename(filepath):
   with open(filepath,'rb') as f_images:
