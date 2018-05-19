@@ -25,7 +25,7 @@ python train.py --input_file_pattern="../data/flickr8k/train-?????-of-00016" \
   --num_steps_per_decay=40000 \
   --train_dir="../output/model/bias_Momentum_lr_0.0005_decay_0.2_40000"
 
-python eval.py --input_file_pattern='../data/flickr8k/val-?????-of-00008' \
+python eval.py --input_file_pattern='../data/flickr8k/val-?????-of-00001' \
     --checkpoint_dir='../output/model/bias_Adam_60000' \
     --attention='bias' \
     --eval_dir='../output/eval/bias_Adam_60000' \
