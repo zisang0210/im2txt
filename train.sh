@@ -37,6 +37,8 @@ python eval.py --input_file_pattern='../data/flickr8k/val-?????-of-00001' \
     --eval_result_dir='../val/results/bias_Adam_60000' \
     --val_raw_image_dir='../flickr8k/Flicker8k_Dataset'
 
+python eval_all.py --input_file_pattern='../data/flickr8k/test-?????-of-00001'     --checkpoint_dir='../output/model/initial_joint_bias_fc1_Adam_tinymind_100000'     --attention='bias_fc1'     --eval_dir='../output/eval/test_eval_all'  --vocab_file="../data/flickr8k/word_counts.txt"     --beam_size=3     --save_eval_result_as_image     --eval_result_dir='../val/results/test_eval_all'     --val_raw_image_dir='../flickr8k/Flicker8k_Dataset'
+
 DATASET_DIR="../flickr8k"
 OUTPUT_DIR="../data/flickr8k_origin_small"
 python ./dataset/build_data.py \
