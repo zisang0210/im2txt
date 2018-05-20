@@ -438,39 +438,39 @@ def main(unused_argv):
     os.system("pwd")
     os.system("ls -al")
     os.system("df -lh")
-    os.system("wget -P /output http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet50_coco_2018_01_28.tar.gz")
-    os.system("tar -xzf /output/faster_rcnn_resnet50_coco_2018_01_28.tar.gz -C /output")
-    os.system("export PYTHONPATH=$PYTHONPATH:./object_detection/")
-    os.system("python ./object_detection/export_inference_graph.py --input_type image_tensor --pipeline_config_path /output/faster_rcnn_resnet50_coco_2018_01_28/pipeline.config --trained_checkpoint_prefix /output/faster_rcnn_resnet50_coco_2018_01_28/model.ckpt  --output_directory /output/exported_graphs")
-    os.system("rm /output/faster_rcnn_resnet50_coco_2018_01_28.tar.gz")
+#     os.system("wget -P /output http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet50_coco_2018_01_28.tar.gz")
+#     os.system("tar -xzf /output/faster_rcnn_resnet50_coco_2018_01_28.tar.gz -C /output")
+#     os.system("export PYTHONPATH=$PYTHONPATH:./object_detection/")
+#     os.system("python ./object_detection/export_inference_graph.py --input_type image_tensor --pipeline_config_path /output/faster_rcnn_resnet50_coco_2018_01_28/pipeline.config --trained_checkpoint_prefix /output/faster_rcnn_resnet50_coco_2018_01_28/model.ckpt  --output_directory /output/exported_graphs")
+#     os.system("rm /output/faster_rcnn_resnet50_coco_2018_01_28.tar.gz")
 
-    def _is_valid_num_shards(num_shards):
-        """Returns True if num_shards is compatible with FLAGS.num_threads."""
-        return num_shards < FLAGS.num_threads or not num_shards % FLAGS.num_threads
+#     def _is_valid_num_shards(num_shards):
+#         """Returns True if num_shards is compatible with FLAGS.num_threads."""
+#         return num_shards < FLAGS.num_threads or not num_shards % FLAGS.num_threads
 
-    assert _is_valid_num_shards(FLAGS.train_shards), (
-            "Please make the FLAGS.num_threads commensurate with FLAGS.train_shards")
-    assert _is_valid_num_shards(FLAGS.test_shards), (
-            "Please make the FLAGS.num_threads commensurate with FLAGS.test_shards")
-    assert (FLAGS.dataset in LOAD_DATASET_MAP), (
-            "Unknown dataset! Must be flickr8k, flickr30k, or coco")
+#     assert _is_valid_num_shards(FLAGS.train_shards), (
+#             "Please make the FLAGS.num_threads commensurate with FLAGS.train_shards")
+#     assert _is_valid_num_shards(FLAGS.test_shards), (
+#             "Please make the FLAGS.num_threads commensurate with FLAGS.test_shards")
+#     assert (FLAGS.dataset in LOAD_DATASET_MAP), (
+#             "Unknown dataset! Must be flickr8k, flickr30k, or coco")
     
-    load_dataset = LOAD_DATASET_MAP[FLAGS.dataset]
+#     load_dataset = LOAD_DATASET_MAP[FLAGS.dataset]
 
-    if not tf.gfile.IsDirectory(FLAGS.output_dir):
-        tf.gfile.MakeDirs(FLAGS.output_dir)
+#     if not tf.gfile.IsDirectory(FLAGS.output_dir):
+#         tf.gfile.MakeDirs(FLAGS.output_dir)
 
-    # train_dataset,val_dataset,test_dataset = load_dataset(FLAGS)
-    train_dataset,test_dataset = load_dataset(FLAGS)
+#     # train_dataset,val_dataset,test_dataset = load_dataset(FLAGS)
+#     train_dataset,test_dataset = load_dataset(FLAGS)
 
-    # Create vocabulary from the training captions.
-    vocab = _create_vocab(train_dataset)
-    # Create image id to captions dict for evaluation
-    _create_image_id_to_captions(train_dataset,filename='train_id_captions.json')
-    # _create_image_id_to_captions(test_dataset,filename='test_id_captions.json')
+#     # Create vocabulary from the training captions.
+#     vocab = _create_vocab(train_dataset)
+#     # Create image id to captions dict for evaluation
+#     _create_image_id_to_captions(train_dataset,filename='train_id_captions.json')
+#     # _create_image_id_to_captions(test_dataset,filename='test_id_captions.json')
 
-    _process_dataset("train", train_dataset, vocab, FLAGS.train_shards)
-    # _process_dataset("test", test_dataset, vocab, FLAGS.test_shards)
+#     _process_dataset("train", train_dataset, vocab, FLAGS.train_shards)
+#     # _process_dataset("test", test_dataset, vocab, FLAGS.test_shards)
 
 
 if __name__ == "__main__":
