@@ -2,8 +2,8 @@ import os
 import zipfile
 
 os.system("pwd")
-os.system("wget http://nlp.cs.illinois.edu/HockenmaierGroup/Framing_Image_Description/Flickr8k_Dataset.zip")
-os.system("wget http://nlp.cs.illinois.edu/HockenmaierGroup/Framing_Image_Description/Flickr8k_text.zip")
+os.system("wget -P /output http://nlp.cs.illinois.edu/HockenmaierGroup/Framing_Image_Description/Flickr8k_Dataset.zip")
+os.system("wget -P /output http://nlp.cs.illinois.edu/HockenmaierGroup/Framing_Image_Description/Flickr8k_text.zip")
 
 def unZipFile(unZipSrc,targeDir):
     if not os.path.isfile(unZipSrc):
@@ -37,8 +37,8 @@ def unZipFile(unZipSrc,targeDir):
     print('解压缩完毕，目标文件目录:{0}'.format(targeDir))
     unZf.close()    
 
-unZipFile('Flickr8k_Dataset.zip','./')
-unZipFile('Flickr8k_text.zip','./')
+unZipFile('/output/Flickr8k_Dataset.zip','/output')
+unZipFile('/output/Flickr8k_text.zip','/output')
 
-os.system("rm Flickr8k_Dataset.zip")
-os.system("rm Flickr8k_text.zip")
+os.system("rm /output/Flickr8k_Dataset.zip")
+os.system("rm /output/Flickr8k_text.zip")
