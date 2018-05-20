@@ -90,6 +90,7 @@ import os.path
 import random
 import sys
 import threading
+import os
 
 from PIL import Image
 import numpy as np
@@ -245,7 +246,7 @@ def _to_sequence_example(image, faster_rcnn, vocab):
             "image/image_id": _int64_feature(image.image_id),
             "image/filename": _bytes_feature(bytes(image.filename, encoding="utf8")),
             "image/data": _bytes_feature(feature_map.tostring()),
-            "iamge/bounding_box": _bytes_feature(bounding_box.tostring())
+            "image/bounding_box": _bytes_feature(bounding_box.tostring())
     })
 
     img_captions_ids = []
@@ -267,7 +268,7 @@ def _to_sequence_example(image, faster_rcnn, vocab):
         img_captions_mask.append(current_masks)
 
     feature_lists = tf.train.FeatureLists(feature_list={
-            "iamge/raw_caption":_bytes_feature_list(image.raw_captions),
+            "image/raw_caption":_bytes_feature_list(image.raw_captions),
             "image/caption": _bytes_list_feature_list(image_captions),
             "image/caption_ids": _int64_list_feature_list(img_captions_ids),
             "image/caption_mask": _float_list_feature_list(img_captions_mask)
@@ -434,6 +435,15 @@ def _create_image_id_to_captions(dataset, filename):
     fp.close()
 
 def main(unused_argv):
+    os.system("pwd")
+    os.system("ls -al")
+    os.system("df -lh")
+    os.system("wget -P /output http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet50_coco_2018_01_28.tar.gz")
+    os.system("tar -xzf /output/faster_rcnn_resnet50_coco_2018_01_28.tar.gz -C /output")
+    os.system("export PYTHONPATH=$PYTHONPATH:./object_detection/")
+    os.system("python ./object_detection/export_inference_graph.py --input_type image_tensor --pipeline_config_path /output/faster_rcnn_resnet50_coco_2018_01_28/pipeline.config --trained_checkpoint_prefix /output/faster_rcnn_resnet50_coco_2018_01_28/model.ckpt  --output_directory /output/exported_graphs")
+    os.system("rm /output/faster_rcnn_resnet50_coco_2018_01_28.tar.gz")
+
     def _is_valid_num_shards(num_shards):
         """Returns True if num_shards is compatible with FLAGS.num_threads."""
         return num_shards < FLAGS.num_threads or not num_shards % FLAGS.num_threads
@@ -457,10 +467,10 @@ def main(unused_argv):
     vocab = _create_vocab(train_dataset)
     # Create image id to captions dict for evaluation
     _create_image_id_to_captions(train_dataset,filename='train_id_captions.json')
-    _create_image_id_to_captions(test_dataset,filename='test_id_captions.json')
+    # _create_image_id_to_captions(test_dataset,filename='test_id_captions.json')
 
     _process_dataset("train", train_dataset, vocab, FLAGS.train_shards)
-    _process_dataset("test", test_dataset, vocab, FLAGS.test_shards)
+    # _process_dataset("test", test_dataset, vocab, FLAGS.test_shards)
 
 
 if __name__ == "__main__":
